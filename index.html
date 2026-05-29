@@ -308,7 +308,7 @@ function renderRowItem(t, fullViewMode) {
   if (isWith && subs.length > 0) {
     breakdownMarkup = '<div class="sub-entries-container" id="drawer-' + t.id + '">' + subs.map(s => '<div class="sub-entry-row-item"><span class="sub-entry-label-cat">' + (CAT_ICONS[s.category]||'📦') + ' ' + s.category + '</span><span class="sub-entry-text-desc">' + escHtml(s.description) + '</span><span class="sub-entry-val-amt">-' + fmt(s.amount) + '</span></div>').join('') + (looseCash > 0.005 ? '<div class="sub-unaccounted-flag">⚠️ ' + fmt(looseCash) + ' unaccounted cash</div>' : '') + '</div>';
   }
-  const inlineDelete = '<button class="tx-delete-inline" onclick="deleteTransaction(\'' + t.id + '\'); event.stopPropagation();">✕</button>';
+  const inlineDelete = `<button class="tx-delete-inline" onclick="deleteTransaction(event, '${t.id}')">✕</button>`;
   const managementPanel = fullViewMode ? '<div class="tx-actions-panel">' + (isWith && subs.length > 0 ? '<button class="tx-action-button" onclick="toggleDrawer(\'' + t.id + '\')">Items</button>' : '') + '<button class="tx-action-button" onclick="openEditModal(\'' + t.id + '\')">Edit</button></div>' : '';
   return '<div class="tx-item" onclick="' + (isWith ? 'toggleDrawer(\'' + t.id + '\')' : '') + '"><div class="tx-main"><div class="tx-icon ' + stylingClass + '">' + displayIcon + '</div><div class="tx-info"><div class="tx-desc">' + escHtml(t.description || t.category) + '</div><div class="tx-cat">' + t.category + (isWith && subs.length > 0 ? ' <span class="withdrawal-badge">' + subs.length + ' items</span>' : '') + '</div></div><div class="tx-right"><div class="tx-amount-block"><div class="tx-amount ' + (isInc ? 'in' : 'out') + '">' + (isInc ? '+' : '-') + fmt(t.amount) + '</div><div style="font-size:11px; color:var(--text3); margin-top:2px;">' + new Date(t.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + '</div></div>' + inlineDelete + '</div></div>' + breakdownMarkup + managementPanel + '</div>';
 }
@@ -401,12 +401,24 @@ async function saveTransaction() {
   closeModal(); loadMonth();
 }
 
-async function deleteTransaction(id) {
+async function deleteTransaction(event, id) {
+  // 1. Instantly halts the mobile touch event from leaking into the parent card loop
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
   if (!confirm("Permanently delete this entry?")) return;
+
   try { 
+    // 2. Dispatches a clean text-key deletion match directly to your Supabase tables
     await sb.from('transactions').delete().match({ id: id });
-  } catch(e){}
-  loadMonth();
+    
+    // 3. Immediately pulls the updated dataset from the cloud to refresh the totals on your screen
+    await loadMonth();
+  } catch(e) {
+    console.error("Deletion target sync error:", e);
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
