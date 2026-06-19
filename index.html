@@ -12,75 +12,69 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --bg: #f7f6f3; --surface: #ffffff; --surface2: #f0efe9; --border: rgba(0,0,0,0.08); --border2: rgba(0,0,0,0.14);
+    --bg: #f7f6f3; --surface: #ffffff; --border: rgba(0,0,0,0.08); --border2: rgba(0,0,0,0.14);
     --text: #1a1a18; --text2: #6b6b67; --text3: #9b9b96; --accent: #2d6a4f; --accent-light: #e8f5ef;
-    --accent2: #d62828; --accent2-light: #fce8e8; --amber: #e07b00; --amber-light: #fff3e0; --blue: #1a5f7a;
-    --radius: 14px; --radius-sm: 8px; --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+    --accent2: #d62828; --accent2-light: #fce8e8; --radius: 14px; --radius-sm: 8px; --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; max-width: 430px; margin: 0 auto; position: relative; overflow-x: hidden; }
+  
+  /* Header layout */
   .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 1.25rem 0.75rem; position: sticky; top: 0; z-index: 50; }
   .header-top { display: flex; align-items: center; justify-content: space-between; }
   .header-title { font-size: 18px; font-weight: 600; }
   .month-nav { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
   .month-nav button { background: none; border: 1px solid var(--border2); border-radius: 6px; padding: 4px 8px; font-size: 13px; cursor: pointer; color: var(--text2); }
   .month-label { font-size: 13px; font-weight: 500; flex: 1; text-align: center; }
-  .back-btn { background: none; border: none; font-size: 15px; color: var(--accent); cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 0; }
-  #app { display: block; }
-  .screen { display: none; }
-  .screen.active { display: block; }
+  
   .dashboard-content { padding: 1.25rem 1.25rem 120px; }
+  
+  /* Base Cards */
   .salary-card { background: var(--surface); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1rem; border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; align-items: center; justify-content: space-between; }
   .salary-info-block { display: flex; align-items: center; gap: 10px; }
   .salary-label { font-size: 14px; color: var(--text2); font-weight: 500; }
-  .salary-right-block { display: flex; align-items: center; gap: 12px; }
   .salary-display-val { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 600; color: var(--text); }
-  .salary-meta-income { font-size: 12px; color: var(--text3); text-align: right; }
   .salary-input-inline { border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 14px; width: 90px; text-align: right; font-family: 'DM Mono', monospace; outline: none; }
   .salary-edit-trigger { background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--text2); }
-  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
+  
+  /* Stats Metric Grid Grid */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
   .stat-card { background: var(--surface); border-radius: var(--radius-sm); padding: 1rem; border: 1px solid var(--border); box-shadow: var(--shadow); }
   .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
   .stat-value { font-size: 20px; font-weight: 600; }
   .stat-value.positive { color: var(--accent); }
   .stat-value.negative { color: var(--accent2); }
-  .stat-value.neutral { color: var(--text); }
-  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  
+  /* Section Header Titles */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; margin-top: 1.5rem; }
   .section-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
-  .view-all-btn { font-size: 13px; color: var(--text2); background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 6px 12px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+  
+  /* Category Breakdowns */
+  .cat-breakdown { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 0.5rem 1.25rem; margin-bottom: 1.5rem; box-shadow: var(--shadow); }
+  .cat-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--bg); font-size: 14px; }
+  .cat-row:last-child { border-bottom: none; }
+  .cat-row-label { display: flex; align-items: center; gap: 8px; color: var(--text); }
+  .cat-row-amount { font-weight: 500; color: var(--text); font-family: 'DM Mono', monospace; }
+  
+  /* Transactions Row Elements */
   .tx-list { display: flex; flex-direction: column; gap: 8px; }
-  .tx-item { background: var(--surface); border-radius: var(--radius-sm); border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; }
-  .tx-main { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  .tx-item { background: var(--surface); border-radius: var(--radius-sm); border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
   .tx-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
   .tx-info { flex: 1; min-width: 0; }
   .tx-desc { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tx-cat { font-size: 12px; color: var(--text3); margin-top: 1px; }
   .tx-right { text-align: right; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-  .tx-amount-block { text-align: right; }
   .tx-amount { font-size: 15px; font-weight: 600; font-family: 'DM Mono', monospace; }
   .tx-amount.out { color: var(--accent2); }
   .tx-amount.in { color: var(--accent); }
-  .tx-actions-panel { display: flex; gap: 6px; padding: 0 14px 10px; justify-content: flex-end; border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 2px; }
-  .tx-action-button { background: none; border: 1px solid var(--border2); border-radius: 6px; font-size: 12px; padding: 4px 10px; cursor: pointer; color: var(--text2); }
-  .tx-action-button.danger { color: var(--accent2); border-color: var(--accent2-light); }
-  .tx-delete-inline { background: none; border: 1px solid var(--border2); border-radius: 6px; font-size: 12px; padding: 4px 8px; cursor: pointer; color: var(--accent2); transition: all 0.1s; }
-  .tx-delete-inline:active { background: var(--accent2-light); }
-  .withdrawal-badge { background: var(--amber-light); color: var(--amber); font-size: 11px; font-weight: 500; padding: 1px 6px; border-radius: 20px; margin-left: 4px; display: inline-block; }
-  .sub-entries-container { border-top: 1px solid var(--border); background: var(--bg); display: none; padding: 8px 14px 10px; }
-  .sub-entries-container.open { display: block; }
-  .sub-entry-row-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-  .sub-entry-row-item:last-child { border-bottom: none; }
-  .sub-entry-label-cat { font-size: 11px; color: var(--text3); }
-  .sub-entry-text-desc { flex: 1; color: var(--text); }
-  .sub-entry-val-amt { font-weight: 500; color: var(--accent2); font-family: 'DM Mono', monospace; }
-  .sub-unaccounted-flag { font-size: 12px; color: var(--amber); margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border2); }
-  .cat-breakdown { background: var(--surface); border-radius: var(--radius-sm); border: 1px solid var(--border); padding: 0.5rem 1.25rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
-  .cat-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--bg); font-size: 14px; }
-  .cat-row:last-child { border-bottom: none; }
-  .cat-row-label { display: flex; align-items: center; gap: 8px; color: var(--text); }
-  .cat-row-amount { font-weight: 500; color: var(--text); font-family: 'DM Mono', monospace; }
+  .tx-delete-btn { background: none; border: 1px solid var(--border2); border-radius: 6px; font-size: 12px; padding: 4px 8px; cursor: pointer; color: var(--text2); transition: all 0.1s; }
+  .tx-delete-btn:active { background: var(--accent2-light); color: var(--accent2); border-color: var(--accent2); }
+  
+  /* Action FAB Trigger Button */
   .fab { position: fixed; bottom: calc(24px + var(--safe-bottom)); right: 24px; width: 56px; height: 56px; border-radius: 28px; background: var(--accent); color: #fff; border: none; font-size: 28px; cursor: pointer; box-shadow: 0 4px 20px rgba(45,106,79,0.4); display: flex; align-items: center; justify-content: center; z-index: 40; }
+  
+  /* Modal Overlay Elements */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; display: none; align-items: flex-end; }
   .modal-overlay.open { display: flex; }
   .modal { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; padding: 1.25rem 1.25rem calc(1.25rem + var(--safe-bottom)); max-height: 92dvh; overflow-y: auto; }
@@ -91,91 +85,74 @@
   .field { margin-bottom: 1rem; }
   .field label { display: block; font-size: 13px; color: var(--text2); font-weight: 500; margin-bottom: 6px; }
   .field input, .field select { width: 100%; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 11px 12px; font-size: 15px; background: var(--bg); color: var(--text); outline: none; }
-  .sub-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
-  .sub-section-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-  .add-sub-btn { font-size: 13px; color: var(--accent); background: none; border: none; cursor: pointer; font-weight: 500; }
-  .sub-entry-form { background: var(--bg); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 8px; border: 1px solid var(--border); }
-  .sub-entry-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-  .sub-entry-row .field { margin-bottom: 0; }
-  .sub-entry-form .remove-sub { font-size: 12px; color: var(--accent2); background: none; border: none; cursor: float; float: right; }
-  .unaccounted-label { font-size: 13px; color: var(--amber); margin-top: 6px; }
   .save-btn { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); padding: 14px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 1rem; }
-  .loading { text-align: center; padding: 3rem; color: var(--text3); }
+  .loading { text-align: center; padding: 2rem; color: var(--text3); font-size: 14px; }
+  
+  /* Categorized Theme Colors Map styling rules */
+  .cat-home { background: #e3f2f9; color: #1a5f7a; }
+  .cat-bills { background: #fff3e0; color: #e07b00; }
+  .cat-supermarket { background: #e8f5ef; color: #2d6a4f; }
+  .cat-transportation { background: #ede7f6; color: #5e35b1; }
+  .cat-entertainment { background: #fce4ec; color: #c2185b; }
+  .cat-savings { background: #e8eaf6; color: #3949ab; }
+  .cat-others { background: #f5f5f5; color: #616161; }
+  .cat-received { background: #e8f5ef; color: #2d6a4f; }
 </style>
 </head>
 <body>
 
 <div id="app">
-  <div id="dashboard" class="screen active">
-    <div class="header">
-      <div class="header-top">
-        <div class="header-title" id="header-month-title">May 2026</div>
-        <button class="view-all-btn" onclick="showScreen('fullview')">📋 View all</button>
+  <div class="header">
+    <div class="header-top">
+      <div class="header-title" id="header-month-title">Loading...</div>
+    </div>
+    <div class="month-nav">
+      <button onclick="changeMonth(-1)">‹ Prev</button>
+      <div class="month-label" id="month-label">Loading...</div>
+      <button onclick="changeMonth(1)">Next ›</button>
+    </div>
+  </div>
+  
+  <div class="dashboard-content">
+    <div class="salary-card">
+      <div class="salary-info-block">
+        <label class="salary-label">Salary €</label>
+        <div id="salary-display" class="salary-display-val">0</div>
+        <input type="number" id="salary-input" class="salary-input-inline" style="display:none" onblur="saveSalary()" onkeydown="if(event.key==='Enter')saveSalary()">
       </div>
-      <div class="month-nav">
-        <button onclick="changeMonth(-1)">‹ Prev</button>
-        <div class="month-label" id="month-label">May 2026</div>
-        <button onclick="changeMonth(1)">Next ›</button>
+      <button class="salary-edit-trigger" onclick="toggleSalaryEdit()">Edit</button>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total received</div>
+        <div class="stat-value positive" id="stat-received">€0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total spent</div>
+        <div class="stat-value negative" id="stat-spent">€0</div>
       </div>
     </div>
     
-    <div class="dashboard-content">
-      <div class="salary-card">
-        <div class="salary-info-block">
-          <label class="salary-label">Salary €</label>
-          <div id="salary-display" class="salary-display-val">0</div>
-          <input type="number" id="salary-input" class="salary-input-inline" style="display:none" onblur="saveSalary()" onkeydown="if(event.key==='Enter')saveSalary()">
-        </div>
-        <div class="salary-right-block">
-          <div id="salary-meta-income" class="salary-meta-income">Income:<br><strong>€0</strong></div>
-          <button class="salary-edit-trigger" onclick="toggleSalaryEdit()">Edit</button>
-        </div>
-      </div>
-
-      <div class="stat-grid">
-        <div class="stat-card">
-          <div class="stat-label">Total spent</div>
-          <div class="stat-value negative" id="stat-spent">€0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total left</div>
-          <div class="stat-value" id="stat-left">€0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total received</div>
-          <div class="stat-value positive" id="stat-received">€0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Unaccounted cash</div>
-          <div class="stat-value neutral" id="stat-unaccounted">€0</div>
-        </div>
-      </div>
-
-      <div class="section-header">
-        <div class="section-title">Recent Transactions</div>
-      </div>
-      <div class="tx-list" id="recent-list">
-        <div class="loading">Loading database items...</div>
+    <div class="stat-grid" style="grid-template-columns: 1fr;">
+      <div class="stat-card" style="text-align: center;">
+        <div class="stat-label">Total left</div>
+        <div class="stat-value" id="stat-left" style="font-size: 26px;">€0</div>
       </div>
     </div>
-  </div>
 
-  <div id="fullview" class="screen">
-    <div class="header">
-      <div class="header-top">
-        <button class="back-btn" onclick="showScreen('dashboard')">← Dashboard</button>
-        <div style="font-size:14px;font-weight:600;color:var(--text2)" id="fullview-month"></div>
-      </div>
+    <div class="section-header">
+      <div class="section-title">Spending By Category</div>
     </div>
-    <div class="full-content">
-      <div class="section-header">
-        <div class="section-title">Spending By Category</div>
-      </div>
-      <div class="cat-breakdown" id="cat-breakdown"></div>
-      <div class="section-header" style="margin-top:1.5rem;">
-        <div class="section-title">All Transactions</div>
-      </div>
-      <div class="tx-list" id="full-list"></div>
+    <div class="cat-breakdown" id="cat-breakdown-panel">
+      <div style="text-align:center; padding:1rem; color:var(--text3); font-size:13px;">No item metrics logged.</div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Transactions Ledger</div>
+    </div>
+    <div class="tx-list" id="ledger-entries-list">
+      <div class="loading">Fetching secure cloud records...</div>
     </div>
   </div>
 
@@ -185,7 +162,7 @@
 <div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <div class="type-toggle">
-      <button class="type-btn active expense" id="type-expense" onclick="setType('expense')">Expense / Withdrawal</button>
+      <button class="type-btn active expense" id="type-expense" onclick="setType('expense')">Expense</button>
       <button class="type-btn income" id="type-income" onclick="setType('income')">Received</button>
     </div>
     <div class="field">
@@ -194,15 +171,14 @@
     </div>
     <div class="field" id="cat-wrapper">
       <label>Category</label>
-      <select id="field-category" onchange="onCategoryChange()">
+      <select id="field-category">
+        <option value="Supermarket">🛒 Supermarket</option>
         <option value="Home">🏠 Home</option>
         <option value="Bills">💡 Bills</option>
-        <option value="Supermarket">🛒 Supermarket</option>
         <option value="Transportation">🚇 Transportation</option>
         <option value="Entertainment">🎬 Entertainment</option>
         <option value="Savings">🏦 Savings</option>
         <option value="Others">📦 Others</option>
-        <option value="Withdrawal">💵 Withdrawal (Cash)</option>
       </select>
     </div>
     <div class="field">
@@ -211,22 +187,17 @@
     </div>
     <div class="field">
       <label id="amount-label">Amount (€)</label>
-      <input type="number" id="field-amount" placeholder="0.00" step="0.01" oninput="updateUnaccounted()">
+      <input type="number" id="field-amount" placeholder="0.00" step="0.01">
     </div>
-    <div class="sub-section" id="sub-section" style="display:none">
-      <div class="sub-section-title">Cash Breakdown <button class="add-sub-btn" onclick="addSubEntry()">+ Add item</button></div>
-      <div id="sub-entries-list"></div>
-      <div class="unaccounted-label" id="unaccounted-label" style="display:none"></div>
-    </div>
-    <button class="save-btn" id="save-btn" onclick="saveTransaction()">Save Entry</button>
+    <button class="save-btn" onclick="saveTransaction()">Save Entry</button>
   </div>
 </div>
 
 <script>
-let sb = null, currentMonthKey = '', monthData = { salary: 0, transactions: [] }, currentType = 'expense', subEntries = [], editingId = null;
-const CATS = ['Home','Bills','Supermarket','Transportation','Entertainment','Savings','Others','Withdrawal'];
-const CAT_ICONS = { Home:'🏠', Bills:'💡', Supermarket:'🛒', Transportation:'🚇', Entertainment:'🎬', Savings:'🏦', Others:'📦', Withdrawal:'💵', Received:'💰' };
-const CAT_COLORS = { Home:'cat-home', Bills:'cat-bills', Supermarket:'cat-supermarket', Transportation:'cat-transportation', Entertainment:'cat-entertainment', Others:'cat-others', Withdrawal:'cat-withdrawal', Savings:'cat-savings', Received:'cat-received' };
+let sb = null, currentMonthKey = '', monthData = { salary: 0, transactions: [] }, currentType = 'expense';
+
+const CAT_ICONS = { Home:'🏠', Bills:'💡', Supermarket:'🛒', Transportation:'🚇', Entertainment:'🎬', Savings:'🏦', Others:'📦', Received:'💰' };
+const CAT_COLORS = { Home:'cat-home', Bills:'cat-bills', Supermarket:'cat-supermarket', Transportation:'cat-transportation', Entertainment:'cat-entertainment', Others:'cat-others', Savings:'cat-savings', Received:'cat-received' };
 
 function getMonthKey(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
 function formatMonthLabel(key) { const [y,m] = key.split('-'); return new Date(y, m-1, 1).toLocaleDateString('en-GB',{month:'long',year:'numeric'}); }
@@ -243,7 +214,6 @@ function updateMonthLabels() {
   const lbl = formatMonthLabel(currentMonthKey);
   document.getElementById('month-label').textContent = lbl;
   document.getElementById('header-month-title').textContent = lbl;
-  document.getElementById('fullview-month').textContent = lbl;
 }
 
 function changeMonth(dir) {
@@ -255,66 +225,90 @@ function changeMonth(dir) {
 
 async function loadMonth() {
   try {
-    document.getElementById('recent-list').innerHTML = '<div class="loading">Updating ledger cards...</div>';
+    document.getElementById('ledger-entries-list').innerHTML = '<div class="loading">Updating system lines...</div>';
     const { data: sData } = await sb.from('monthly_salary').select('salary').eq('month_key', currentMonthKey).maybeSingle();
     const { data: tData } = await sb.from('transactions').select('*').eq('month_key', currentMonthKey).order('date', {ascending:false});
     monthData = { salary: sData?.salary || 0, transactions: tData || [] };
     render();
-  } catch(e) { document.getElementById('recent-list').innerHTML = '<div class="empty-state">Database offline.</div>'; }
+  } catch(e) { document.getElementById('ledger-entries-list').innerHTML = '<div class="loading">Database connection offline.</div>'; }
 }
 
 function render() {
   try {
-    let spent = 0, received = 0, physicalCashSpent = 0, totalWithdrawals = 0;
-    const catTotals = {};
+    let spent = 0, received = 0;
+    const catTotals = { 'Supermarket':0, 'Home':0, 'Bills':0, 'Transportation':0, 'Entertainment':0, 'Savings':0, 'Others':0 };
+    
     monthData.transactions.forEach(t => {
       if (t.type === 'income') { received += t.amount; } 
-      else {
-        if (t.category === 'Withdrawal') {
-          totalWithdrawals += t.amount;
-          (t.sub_entries || []).forEach(s => { physicalCashSpent += s.amount; spent += s.amount; catTotals[s.category] = (catTotals[s.category] || 0) + s.amount; });
-        } else { spent += t.amount; catTotals[t.category] = (catTotals[t.category] || 0) + t.amount; }
+      else { 
+        spent += t.amount; 
+        if(catTotals[t.category] !== undefined) { catTotals[t.category] += t.amount; }
+        else { catTotals['Others'] += t.amount; }
       }
     });
-    const unaccounted = totalWithdrawals - physicalCashSpent;
+
     const totalIncome = monthData.salary + received;
     const totalLeft = totalIncome - spent;
+
     document.getElementById('salary-display').textContent = monthData.salary || '0';
-    document.getElementById('salary-meta-income').innerHTML = 'Income:<br><strong>' + fmt(totalIncome) + '</strong>';
     document.getElementById('stat-spent').textContent = fmt(spent);
-    document.getElementById('stat-received').textContent = fmt(received);
-    document.getElementById('stat-unaccounted').textContent = fmt(unaccounted);
+    document.getElementById('stat-received').textContent = fmt(totalIncome);
+    
     const leftEl = document.getElementById('stat-left');
     leftEl.textContent = fmt(totalLeft);
     leftEl.className = 'stat-value ' + (totalLeft >= 0 ? 'positive' : 'negative');
-    const listEl = document.getElementById('recent-list');
-    listEl.innerHTML = monthData.transactions.length === 0 ? '<div class="empty-state">No transaction logs available.</div>' : monthData.transactions.slice(0, 5).map(t => renderRowItem(t, false)).join('');
-    const catEl = document.getElementById('cat-breakdown');
-    const sortedCats = Object.entries(catTotals).sort((a,b) => b[1] - a[1]);
-    catEl.innerHTML = sortedCats.length === 0 ? '<div style="font-size:13px; text-align:center; padding:1rem; color:var(--text3);">No active metrics.</div>' : sortedCats.map(([c, val]) => '<div class="cat-row"><div class="cat-row-label">' + (CAT_ICONS[c]||'📦') + ' ' + c + '</div><div class="cat-row-amount">' + fmt(val) + '</div></div>').join('');
-    document.getElementById('full-list').innerHTML = monthData.transactions.length === 0 ? '<div class="empty-state">No transactions cataloged.</div>' : monthData.transactions.map(t => renderRowItem(t, true)).join('');
+
+    // Render Category spending section block
+    const catPanel = document.getElementById('cat-breakdown-panel');
+    const activeSpentCats = Object.entries(catTotals).filter(([_, val]) => val > 0).sort((a,b) => b[1] - a[1]);
+    
+    if(activeSpentCats.length === 0) {
+      catPanel.innerHTML = '<div style="text-align:center; padding:1rem; color:var(--text3); font-size:13px;">No expenses tracked this month.</div>';
+    } else {
+      catPanel.innerHTML = activeSpentCats.map(([c, val]) => `
+        <div class="cat-row">
+          <div class="cat-row-label">${CAT_ICONS[c]} ${c}</div>
+          <div class="cat-row-amount">${fmt(val)} EUR</div>
+        </div>
+      `).join('');
+    }
+
+    // Render Transaction rows with inline deletion sync execution
+    const listEl = document.getElementById('ledger-entries-list');
+    if (monthData.transactions.length === 0) {
+      listEl.innerHTML = '<div class="loading" style="color:var(--text3)">No entry entries documented.</div>';
+      return;
+    }
+    
+    listEl.innerHTML = monthData.transactions.map(t => {
+      const isInc = t.type === 'income';
+      const cssTheme = CAT_COLORS[isInc ? 'Received' : t.category] || 'cat-others';
+      const icon = isInc ? CAT_ICONS['Received'] : (CAT_ICONS[t.category] || '📦');
+      return `
+        <div class="tx-item">
+          <div class="tx-icon ${cssTheme}">${icon}</div>
+          <div class="tx-info">
+            <div class="tx-desc">${escHtml(t.description || t.category)}</div>
+            <div class="tx-cat">${t.category} · ${new Date(t.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-amount ${isInc ? 'in' : 'out'}">${isInc ? '+' : '-'}${fmt(t.amount)}</div>
+            <button class="tx-delete-btn" onclick="deleteTransaction(event, '${t.id}')">✕</button>
+          </div>
+        </div>
+      `;
+    }).join('');
   } catch(err) { console.error(err); }
 }
 
-function renderRowItem(t, fullViewMode) {
-  const isInc = t.type === 'income';
-  const isWith = t.category === 'Withdrawal';
-  const stylingClass = CAT_COLORS[isInc ? 'Received' : t.category] || 'cat-others';
-  const displayIcon = isInc ? CAT_ICONS['Received'] : (CAT_ICONS[t.category] || '📦');
-  const subs = t.sub_entries || [];
-  const insideSum = subs.reduce((sum, item) => sum + item.amount, 0);
-  const looseCash = isWith ? (t.amount - insideSum) : 0;
-  let breakdownMarkup = '';
-  if (isWith && subs.length > 0) {
-    breakdownMarkup = '<div class="sub-entries-container" id="drawer-' + t.id + '">' + subs.map(s => '<div class="sub-entry-row-item"><span class="sub-entry-label-cat">' + (CAT_ICONS[s.category]||'📦') + ' ' + s.category + '</span><span class="sub-entry-text-desc">' + escHtml(s.description) + '</span><span class="sub-entry-val-amt">-' + fmt(s.amount) + '</span></div>').join('') + (looseCash > 0.005 ? '<div class="sub-unaccounted-flag">⚠️ ' + fmt(looseCash) + ' unaccounted cash</div>' : '') + '</div>';
-  }
-  const inlineDelete = `<button class="tx-delete-inline" onclick="deleteTransaction(event, '${t.id}')">✕</button>`;
-  const managementPanel = fullViewMode ? '<div class="tx-actions-panel">' + (isWith && subs.length > 0 ? '<button class="tx-action-button" onclick="toggleDrawer(\'' + t.id + '\')">Items</button>' : '') + '<button class="tx-action-button" onclick="openEditModal(\'' + t.id + '\')">Edit</button></div>' : '';
-  return '<div class="tx-item" onclick="' + (isWith ? 'toggleDrawer(\'' + t.id + '\')' : '') + '"><div class="tx-main"><div class="tx-icon ' + stylingClass + '">' + displayIcon + '</div><div class="tx-info"><div class="tx-desc">' + escHtml(t.description || t.category) + '</div><div class="tx-cat">' + t.category + (isWith && subs.length > 0 ? ' <span class="withdrawal-badge">' + subs.length + ' items</span>' : '') + '</div></div><div class="tx-right"><div class="tx-amount-block"><div class="tx-amount ' + (isInc ? 'in' : 'out') + '">' + (isInc ? '+' : '-') + fmt(t.amount) + '</div><div style="font-size:11px; color:var(--text3); margin-top:2px;">' + new Date(t.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + '</div></div>' + inlineDelete + '</div></div>' + breakdownMarkup + managementPanel + '</div>';
+function toggleSalaryEdit() {
+  const display = document.getElementById('salary-display');
+  const input = document.getElementById('salary-input');
+  if (input.style.display === 'none') {
+    display.style.display = 'none'; input.style.display = 'inline-block';
+    input.value = monthData.salary; input.focus();
+  } else { saveSalary(); }
 }
-
-function toggleDrawer(id) { const el = document.getElementById('drawer-' + id); if(el) el.classList.toggle('open'); }
-function toggleSalaryEdit() { const display = document.getElementById('salary-display'); const input = document.getElementById('salary-input'); if (input.style.display === 'none') { display.style.display = 'none'; input.style.display = 'inline-block'; input.value = monthData.salary; input.focus(); } else { saveSalary(); } }
 
 async function saveSalary() {
   const val = parseFloat(document.getElementById('salary-input').value) || 0;
@@ -332,59 +326,16 @@ function setType(type) {
   document.getElementById('type-income').classList.toggle('active', type === 'income');
   document.getElementById('cat-wrapper').style.display = type === 'income' ? 'none' : 'block';
   document.getElementById('amount-label').textContent = type === 'income' ? 'Amount Received (€)' : 'Amount (€)';
-  onCategoryChange();
-}
-
-function onCategoryChange() {
-  const cat = document.getElementById('field-category').value;
-  document.getElementById('sub-section').style.display = (cat === 'Withdrawal' && currentType === 'expense') ? 'block' : 'none';
-  updateUnaccounted();
-}
-
-function addSubEntry() { subEntries.push({category:'Home', description:'', amount:0}); renderSubEntries(); }
-function removeSubEntry(i) { subEntries.splice(i,1); renderSubEntries(); }
-function updateSubField(i, f, v) { subEntries[i][f] = f==='amount' ? (parseFloat(v)||0) : v; if(f==='amount') updateUnaccounted(); }
-
-function renderSubEntries() {
-  document.getElementById('sub-entries-list').innerHTML = subEntries.map((s,i) => '<div class="sub-entry-form"><button class="remove-sub" onclick="removeSubEntry(' + i + ')">Remove</button><div class="sub-entry-row"><div class="field"><label>Category</label><select onchange="updateSubField(' + i + ',\'category\',this.value)">' + CATS.filter(c=>c!=='Withdrawal').map(c=>'<option value="' + c + '" ' + (s.category===c?'selected':'') + '>' + CAT_ICONS[c] + ' ' + c + '</option>').join('') + '</select></div><div class="field"><label>Amount (€)</label><input type="number" value="' + (s.amount||'') + '" step="0.01" oninput="updateSubField(' + i + ',\'amount\',this.value)"></div></div><div class="field" style="margin-top:8px;"><label>Description</label><input type="text" value="' + escHtml(s.description) + '" placeholder="Cash spent details..." oninput="updateSubField(' + i + ',\'description\',this.value)"></div></div>').join('');
-  updateUnaccounted();
-}
-
-function updateUnaccounted() {
-  const total = parseFloat(document.getElementById('field-amount').value) || 0;
-  const subTotal = subEntries.reduce((s,x)=>s+(x.amount||0),0);
-  const diff = total - subTotal;
-  const lbl = document.getElementById('unaccounted-label');
-  if (document.getElementById('field-category').value === 'Withdrawal' && currentType === 'expense' && subEntries.length > 0 && diff > 0.005) { lbl.textContent = '⚠️ ' + fmt(diff) + ' unaccounted cash'; lbl.style.display = 'block'; } else { lbl.style.display = 'none'; }
 }
 
 function openAddModal() {
-  editingId = null; subEntries = [];
-  document.getElementById('save-btn').textContent = 'Save Entry';
   document.getElementById('field-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('field-desc').value = '';
   document.getElementById('field-amount').value = '';
-  document.getElementById('field-category').value = 'Home';
+  document.getElementById('field-category').value = 'Supermarket';
   setType('expense');
   document.getElementById('modal-overlay').classList.add('open');
 }
-
-function openEditModal(id) {
-  const t = monthData.transactions.find(x => x.id === id);
-  if (!t) return;
-  editingId = id;
-  subEntries = JSON.parse(JSON.stringify(t.sub_entries || []));
-  document.getElementById('save-btn').textContent = 'Update Entry';
-  document.getElementById('field-date').value = t.date;
-  document.getElementById('field-desc').value = t.description || '';
-  document.getElementById('field-amount').value = t.amount;
-  setType(t.type);
-  if(t.type === 'expense') document.getElementById('field-category').value = t.category;
-  onCategoryChange();
-  renderSubEntries();
-  document.getElementById('modal-overlay').classList.add('open');
-}
-
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 
 async function saveTransaction() {
@@ -393,37 +344,24 @@ async function saveTransaction() {
   const description = document.getElementById('field-desc').value.trim();
   const amount = parseFloat(document.getElementById('field-amount').value) || 0;
   if (!date || amount <= 0) return;
-  const payload = { month_key: currentMonthKey, type: currentType, category, description, amount, date, sub_entries: category === 'Withdrawal' ? subEntries : [] };
-  try {
-    if (editingId) { await sb.from('transactions').update(payload).eq('id', editingId); }
-    else { await sb.from('transactions').insert([payload]); }
-  } catch(e){}
+  
+  const payload = { month_key: currentMonthKey, type: currentType, category, description, amount, date };
+  try { await sb.from('transactions').insert([payload]); } catch(e){}
   closeModal(); loadMonth();
 }
 
 async function deleteTransaction(event, id) {
-  // 1. Instantly halts the mobile touch event from leaking into the parent card loop
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  if (!confirm("Permanently delete this entry?")) return;
-
-  try { 
-    // 2. Dispatches a clean text-key deletion match directly to your Supabase tables
+  if (event) { event.preventDefault(); event.stopPropagation(); }
+  if (!confirm("Permanently delete this item row?")) return;
+  try {
     await sb.from('transactions').delete().match({ id: id });
-    
-    // 3. Immediately pulls the updated dataset from the cloud to refresh the totals on your screen
     await loadMonth();
-  } catch(e) {
-    console.error("Deletion target sync error:", e);
-  }
+  } catch(e){ console.error(e); }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
   const url = "https://jikqrfseacrrekpolbsa.supabase.co";
-  const key = "sb_publishable_PXXdb5dYgPcAFeK9TJamvQ_Qkxbf6vX";
+  const key = "sb_publishable_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imppa3FyZnNlYWNycmVrcG9sYnNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA0MTUyMjUsImV4cCI6MjA1NjAwMTIyNX0.WIdFj06g7eG6m9Uf4gCstRIsZ48L4fX6Vn67YwD7yZk";
   try { sb = supabase.createClient(url, key); initApp(); } catch(e){}
 });
 </script>
