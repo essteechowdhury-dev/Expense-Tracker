@@ -81,7 +81,7 @@
   .loading { text-align: center; padding: 2rem; color: var(--text3); font-size: 14px; }
   
   .cat-home { background: #e3f2f9; color: #1a5f7a; }
-  .cat-bills { background: #fff3e0; color: #e07b00; }
+  .cat-patision { background: #fff3e0; color: #e07b00; }
   .cat-supermarket { background: #e8f5ef; color: #2d6a4f; }
   .cat-transportation { background: #ede7f6; color: #5e35b1; }
   .cat-entertainment { background: #fce4ec; color: #c2185b; }
@@ -165,7 +165,7 @@
       <select id="field-category">
         <option value="Supermarket">🛒 Supermarket</option>
         <option value="Home">🏠 Home</option>
-        <option value="Bills">💡 Bills</option>
+        <option value="Patision House">🏢 Patision House</option>
         <option value="Transportation">🚇 Transportation</option>
         <option value="Entertainment">🎬 Entertainment</option>
         <option value="Savings">🏦 Savings</option>
@@ -187,8 +187,8 @@
 <script>
 let sb = null, currentMonthKey = '', monthData = { salary: 0, transactions: [] }, currentType = 'expense';
 
-const CAT_ICONS = { Home:'🏠', Bills:'💡', Supermarket:'🛒', Transportation:'🚇', Entertainment:'🎬', Savings:'🏦', Others:'📦', Received:'💰' };
-const CAT_COLORS = { Home:'cat-home', Bills:'cat-bills', Supermarket:'cat-supermarket', Transportation:'cat-transportation', Entertainment:'cat-entertainment', Others:'cat-others', Savings:'cat-savings', Received:'cat-received' };
+const CAT_ICONS = { Home:'🏠', 'Patision House':'🏢', Supermarket:'🛒', Transportation:'🚇', Entertainment:'🎬', Savings:'🏦', Others:'📦', Received:'💰' };
+const CAT_COLORS = { Home:'cat-home', 'Patision House':'cat-patision', Supermarket:'cat-supermarket', Transportation:'cat-transportation', Entertainment:'cat-entertainment', Others:'cat-others', Savings:'cat-savings', Received:'cat-received' };
 
 function getMonthKey(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
 function formatMonthLabel(key) { const [y,m] = key.split('-'); return new Date(y, m-1, 1).toLocaleDateString('en-GB',{month:'long',year:'numeric'}); }
@@ -234,7 +234,7 @@ async function loadMonth() {
 function render() {
   try {
     let spent = 0, received = 0;
-    const catTotals = { 'Supermarket':0, 'Home':0, 'Bills':0, 'Transportation':0, 'Entertainment':0, 'Savings':0, 'Others':0 };
+    const catTotals = { 'Supermarket':0, 'Home':0, 'Patision House':0, 'Transportation':0, 'Entertainment':0, 'Savings':0, 'Others':0 };
     
     monthData.transactions.forEach(t => {
       const amt = parseFloat(t.amount) || 0;
@@ -369,27 +369,10 @@ async function deleteTransaction(event, id) {
   await loadMonth();
 }
 
-window.addEventListener('DOMContentLoaded', async () => {
-  const url = "https://jikqrfseacrrekpolbsa.supabase.co";
-  let key = localStorage.getItem('sb_key_clean');
-  
-  if (!key) {
-    key = "sb_publishable_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imppa3FyZnNlYWNycmVrcG9sYnNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA0MTUyMjUsImV4cCI6MjA1NjAwMTIyNX0.WIdFj06g7eG6m9Uf4gCstRIsZ48L4fX6Vn67YwD7yZk";
-  }
-
-  try { 
-    sb = supabase.createClient(url, key); 
-    const { error } = await sb.from('monthly_salary').select('salary').limit(1);
-    if (error && error.message.includes("Invalid API key")) throw new Error("Invalid Key");
-    localStorage.setItem('sb_key_clean', key);
-    initApp(); 
-  } catch(e) {
-    const freshKey = prompt("The default API Key expired or was cut off. Please paste your fresh 'default publishable key' here:");
-    if (freshKey) {
-      localStorage.setItem('sb_key_clean', freshKey.trim());
-      location.reload();
-    }
-  }
+window.addEventListener('DOMContentLoaded', () => {
+  const url = "https://qpkwtinwqtetebhqdwji.supabase.co";
+  const key = "sb_publishable_5GwvJ-Ks1enlu-QEc86_6g_8MVrPRa3";
+  try { sb = supabase.createClient(url, key); initApp(); } catch(e){}
 });
 </script>
 </body>
