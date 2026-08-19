@@ -9,7 +9,7 @@
 <title>Expense Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght=300;400;500;600&family=DM+Mono:wght=400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
 <style>
   :root {
     --bg: #f7f6f3; --surface: #ffffff; --border: rgba(0,0,0,0.08); --border2: rgba(0,0,0,0.14);
@@ -420,7 +420,12 @@ async function deleteTransaction(event, id) {
 window.addEventListener('DOMContentLoaded', () => {
   const url = "https://jikqrfseacrrekpolbsa.supabase.co";
   const key = "sb_publishable_PXXdb5dYgPcAFeK9TJamvQ_Qkxbf6vX";
-  try { sb = supabase.createClient(url, key); initApp(); } catch(e){}
+  try { 
+    sb = supabase.createClient(url, key); 
+    initApp(); 
+  } catch(e) {
+    console.error("Initialization error:", e);
+  }
 });
 </script>
 </body>
