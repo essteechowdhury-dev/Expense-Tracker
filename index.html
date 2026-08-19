@@ -9,7 +9,7 @@
 <title>Expense Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght=300;400;500;600&family=DM+Mono:wght=400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 <style>
   :root {
     --bg: #f7f6f3; --surface: #ffffff; --border: rgba(0,0,0,0.08); --border2: rgba(0,0,0,0.14);
@@ -214,7 +214,7 @@ function updateMonthLabels() {
 }
 
 async function changeMonth(dir) {
-  activeCategoryFilter = null; // Clear filter on month navigate
+  activeCategoryFilter = null;
   const [y,m] = currentMonthKey.split('-').map(Number);
   currentMonthKey = getMonthKey(new Date(y, m-1+dir, 1));
   updateMonthLabels();
@@ -239,11 +239,7 @@ async function loadMonth() {
 }
 
 function toggleCategoryFilter(category) {
-  if (activeCategoryFilter === category) {
-    activeCategoryFilter = null;
-  } else {
-    activeCategoryFilter = category;
-  }
+  activeCategoryFilter = (activeCategoryFilter === category) ? null : category;
   render();
 }
 
@@ -298,7 +294,6 @@ function render() {
       }).join('');
     }
 
-    // Set title area view based on active filter state
     const titleArea = document.getElementById('ledger-title-area');
     if (activeCategoryFilter) {
       titleArea.innerHTML = `
@@ -313,7 +308,6 @@ function render() {
       titleArea.textContent = "Transactions Ledger";
     }
 
-    // Filter transaction array records
     const displayedTransactions = monthData.transactions.filter(t => {
       if (!activeCategoryFilter) return true;
       return t.category === activeCategoryFilter;
@@ -366,7 +360,7 @@ async function saveSalary() {
 
   const { error } = await sb.from('monthly_salary').upsert({month_key: currentMonthKey, salary: val}, {onConflict:'month_key'});
   if (error) {
-    alert(`Salary Sync Blocked!\nCode: ${error.code}\nMessage: ${error.message}\nDetails: ${error.details}`);
+    alert(`Salary Sync Blocked!\nCode: ${error.code}\nMessage: ${error.message}`);
   }
   await loadMonth();
 }
@@ -401,7 +395,7 @@ async function saveTransaction() {
   
   const { error } = await sb.from('transactions').insert([payload]);
   if (error) {
-    alert(`Transaction Write Blocked!\nCode: ${error.code}\nMessage: ${error.message}\nDetails: ${error.details}`);
+    alert(`Transaction Write Blocked!\nCode: ${error.code}\nMessage: ${error.message}`);
   }
   await loadMonth();
 }
@@ -421,10 +415,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const url = "https://jikqrfseacrrekpolbsa.supabase.co";
   const key = "sb_publishable_PXXdb5dYgPcAFeK9TJamvQ_Qkxbf6vX";
   try { 
-    sb = supabase.createClient(url, key); 
-    initApp(); 
+    if (window.supabase) {
+      sb = window.supabase.createClient(url, key); 
+      initApp(); 
+    } else {
+      document.getElementById('ledger-entries-list').innerHTML = '<div class="loading" style="color:var(--accent2)">Supabase Library failed to load from CDN.</div>';
+    }
   } catch(e) {
-    console.error("Initialization error:", e);
+    document.getElementById('ledger-entries-list').innerHTML = `<div class="loading" style="color:var(--accent2)">Init Error: ${e.message || e}</div>`;
   }
 });
 </script>
