@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jira Tracker Workspace - Demo</title>
+  <title>Jira Tracker Workspace</title>
   
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,10 +15,10 @@
   <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
   
-  <!-- DOMPurify for strict client-side XSS protection -->
+  <!-- DOMPurify -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
 
-  <!-- Supabase JS Client (Optional connection) -->
+  <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -120,7 +120,6 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Top Navigation */
     .app-header {
       background-color: var(--bg-panel);
       border-bottom: 1px solid var(--border-color);
@@ -210,7 +209,6 @@
       color: #fff;
     }
 
-    /* Sub-nav Tabs */
     .tabs-bar {
       background: var(--bg-panel);
       border-bottom: 1px solid var(--border-color);
@@ -266,7 +264,6 @@
       border-radius: 10px;
     }
 
-    /* Workspace */
     .workspace-body {
       display: flex;
       flex: 1;
@@ -462,7 +459,6 @@
       50% { opacity: 0.75; }
     }
 
-    /* Detail View */
     .detail-view {
       flex: 1;
       display: flex;
@@ -481,9 +477,6 @@
       height: 100%;
       color: var(--text-dim);
       gap: 16px;
-      text-align: center;
-      max-width: 480px;
-      margin: 0 auto;
     }
 
     .empty-state i {
@@ -584,7 +577,6 @@
       text-decoration: underline;
     }
 
-    /* AI Summarizer */
     .ai-action-bar {
       margin-top: 14px;
       display: flex;
@@ -647,7 +639,6 @@
       font-style: italic;
     }
 
-    /* Note History */
     .history-section {
       margin-top: 24px;
       display: flex;
@@ -693,7 +684,6 @@
       margin: 8px 0;
     }
 
-    /* Composer */
     .composer-section {
       margin-top: 28px;
       background: var(--bg-panel);
@@ -765,7 +755,6 @@
       color: #fff;
     }
 
-    /* Modals */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -881,7 +870,6 @@
       gap: 8px;
     }
 
-    /* Toast */
     .toast-container {
       position: fixed;
       bottom: 24px;
@@ -918,7 +906,6 @@
 </head>
 <body>
 
-  <!-- Header -->
   <header class="app-header">
     <div class="header-left">
       <button class="btn-icon" id="toggleSidebarBtn" title="Toggle Sidebar">
@@ -935,7 +922,7 @@
       <button class="btn-header" id="templatesBtn" title="Saved Template Spaces">
         <i class="fa-solid fa-folder-open" style="color:#a855f7;"></i> Templates
       </button>
-      <button class="btn-header" id="settingsBtn" title="Setup Database or AI">
+      <button class="btn-header" id="settingsBtn" title="Database & AI Setup">
         <i class="fa-solid fa-gear"></i> Settings
       </button>
       <button class="btn-header btn-primary" id="newTicketBtn">
@@ -944,7 +931,6 @@
     </div>
   </header>
 
-  <!-- Status Tabs -->
   <nav class="tabs-bar">
     <button class="tab-btn active" data-tab="waiting_stakeholders">
       Waiting Reply (Stakeholders) <span class="tab-count" id="count-waiting_stakeholders">0</span>
@@ -960,10 +946,7 @@
     </button>
   </nav>
 
-  <!-- Workspace -->
   <div class="workspace-body">
-    
-    <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-controls">
         <div class="search-box">
@@ -981,21 +964,16 @@
         </div>
       </div>
 
-      <div class="ticket-list" id="ticketListContainer">
-        <!-- Injected dynamically -->
-      </div>
+      <div class="ticket-list" id="ticketListContainer"></div>
     </aside>
 
-    <!-- Detail View -->
     <main class="detail-view" id="detailView">
       <div class="empty-state" id="emptyState">
-        <i class="fa-solid fa-inbox"></i>
-        <h3 style="font-size:18px; color:var(--text-main); font-weight:600;">Workspace Ready</h3>
-        <p>No tickets currently logged. Click <strong>"+ New Ticket"</strong> at the top right to log a Jira task and test automatic tab routing.</p>
+        <i class="fa-solid fa-clipboard-check"></i>
+        <p>Select a Jira ticket from the list or click "+ New Ticket" to begin tracking.</p>
       </div>
 
       <div id="activeTicketContent" style="display:none; flex-direction:column; height:100%;">
-        
         <div class="detail-header">
           <div class="detail-top-row">
             <div class="meta-badges-left" id="detailBadges"></div>
@@ -1058,7 +1036,6 @@
     </main>
   </div>
 
-  <!-- Create / Edit Ticket Modal -->
   <div class="modal-overlay" id="ticketModal">
     <div class="modal-card">
       <div class="modal-header">
@@ -1070,8 +1047,8 @@
         
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Jira Key (e.g. PROJ-101) *</label>
-            <input type="text" class="form-input" id="modalJiraKey" placeholder="PROJ-101" required>
+            <label class="form-label">Jira Key (e.g. OPPR-9344) *</label>
+            <input type="text" class="form-input" id="modalJiraKey" placeholder="PROJ-1234" required>
           </div>
           <div class="form-group">
             <label class="form-label">Priority</label>
@@ -1086,7 +1063,7 @@
 
         <div class="form-group">
           <label class="form-label">Summary / Task Title *</label>
-          <input type="text" class="form-input" id="modalSummary" placeholder="e.g. Integration test on staging" required>
+          <input type="text" class="form-input" id="modalSummary" placeholder="Task description..." required>
         </div>
 
         <div class="form-row">
@@ -1117,12 +1094,12 @@
           </div>
           <div class="form-group">
             <label class="form-label">Direct Jira URL</label>
-            <input type="url" class="form-input" id="modalJiraUrl" placeholder="https://jira.company.com/browse/PROJ-101">
+            <input type="url" class="form-input" id="modalJiraUrl" placeholder="https://jira.company.com/browse/...">
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Confluence / Documentation Link</label>
+          <label class="form-label">Shelf / Confluence / Reference Link</label>
           <input type="url" class="form-input" id="modalShelfUrl" placeholder="https://confluence.company.com/pages/...">
         </div>
       </div>
@@ -1133,7 +1110,6 @@
     </div>
   </div>
 
-  <!-- Templates Modal -->
   <div class="modal-overlay" id="templatesModal">
     <div class="modal-card" style="max-width: 720px;">
       <div class="modal-header">
@@ -1142,7 +1118,7 @@
       </div>
       <div class="modal-body">
         <p style="font-size:13px; color:var(--text-muted);">
-          Standard reusable update formats. Click "Insert" to paste directly into your active note, or copy to clipboard.
+          Reusable standardized formats. Click "Insert into Editor" to paste directly into your active note, or copy to clipboard.
         </p>
         <div id="templatesList" style="display:flex; flex-direction:column; gap:12px;"></div>
       </div>
@@ -1152,7 +1128,6 @@
     </div>
   </div>
 
-  <!-- Settings Modal -->
   <div class="modal-overlay" id="settingsModal">
     <div class="modal-card">
       <div class="modal-header">
@@ -1161,15 +1136,15 @@
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label class="form-label">Supabase URL (Optional Shared Database)</label>
-          <input type="text" class="form-input" id="cfgSupabaseUrl" placeholder="https://xyz.supabase.co">
+          <label class="form-label">Supabase URL (Database Host)</label>
+          <input type="text" class="form-input" id="cfgSupabaseUrl" placeholder="https://xyzcompany.supabase.co">
         </div>
         <div class="form-group">
-          <label class="form-label">Supabase Anon Key</label>
-          <input type="password" class="form-input" id="cfgSupabaseKey" placeholder="eyJhbGciOi...">
+          <label class="form-label">Supabase Anon Key (Public Key with RLS)</label>
+          <input type="password" class="form-input" id="cfgSupabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
         </div>
         <div class="form-group">
-          <label class="form-label">Google Gemini API Key (Optional AI Summarizer)</label>
+          <label class="form-label">Google Gemini API Key (1-Click AI Summarizer)</label>
           <input type="password" class="form-input" id="cfgGeminiKey" placeholder="AIzaSy...">
         </div>
       </div>
@@ -1183,42 +1158,39 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <script>
-    // Independent Clean Storage Namespace
-    const STORAGE_KEY_TICKETS = 'jira_demo_blank_tickets';
-    const STORAGE_KEY_NOTES = 'jira_demo_blank_notes';
-
     const state = {
       currentTab: 'waiting_stakeholders',
       selectedTicketId: null,
       tickets: [],
       notes: {},
-      theme: localStorage.getItem('jira_demo_theme') || 'obsidian',
+      theme: localStorage.getItem('jira_theme') || 'obsidian',
       quill: null,
       supabaseClient: null,
-      geminiApiKey: localStorage.getItem('jira_demo_gemini_key') || ''
+      geminiApiKey: localStorage.getItem('gemini_api_key') || ''
     };
 
     const defaultTemplates = [
       {
         id: 'tpl-1',
         title: 'Stakeholder Status Ingestion',
-        content: '<p><strong>Current Status:</strong> Ready for testing on staging environment.</p><p><strong>Blockers:</strong> Awaiting confirmation on required credentials.</p><p><strong>Next Action:</strong> Follow-up if no reply by tomorrow.</p>'
+        content: '<p><strong>Current Status:</strong> Ready for testing on staging environment.</p><p><strong>Blockers:</strong> Awaiting stakeholder confirmation on account credentials.</p><p><strong>Next Action:</strong> Follow-up if no reply by tomorrow.</p>'
       },
       {
         id: 'tpl-2',
-        title: 'Diagnostic & Escalation',
-        content: '<p><strong>Issue Identified:</strong> Failure identified during API request handling.</p><p><strong>Screenshot Attached Below:</strong></p><p><strong>Escalated To:</strong> Engineering core team for review.</p>'
+        title: 'Bug Diagnostic & Escalation',
+        content: '<p><strong>Issue Identified:</strong> Failure on payment API response during checkout flow.</p><p><strong>Screenshot Attached Below:</strong></p><p><strong>Escalated To:</strong> Core backend infrastructure team for patch review.</p>'
       },
       {
         id: 'tpl-3',
         title: 'Weekly Ticket Recap',
-        content: '<p><strong>Weekly Progress:</strong> Milestone completed; process documentation uploaded.</p><p><strong>Pending Decisions:</strong> Go-live date sign-off pending leadership approval.</p>'
+        content: '<p><strong>Weekly Progress:</strong> Milestone 1 completed; process documentation uploaded to Shelf.</p><p><strong>Pending Decisions:</strong> Go-live date sign-off pending leadership approval.</p>'
       }
     ];
 
     document.addEventListener('DOMContentLoaded', () => {
       applyTheme(state.theme);
       initQuill();
+      initSupabase();
       bindEvents();
       loadData();
     });
@@ -1237,11 +1209,23 @@
       });
     }
 
+    function initSupabase() {
+      const url = localStorage.getItem('supabase_url');
+      const key = localStorage.getItem('supabase_key');
+      if (url && key && window.supabase) {
+        try {
+          state.supabaseClient = window.supabase.createClient(url, key);
+        } catch (e) {
+          console.error("Supabase init error:", e);
+        }
+      }
+    }
+
     const themes = ['obsidian', 'midnight', 'forest', 'clean-light'];
     function applyTheme(themeName) {
       document.documentElement.setAttribute('data-theme', themeName);
       state.theme = themeName;
-      localStorage.setItem('jira_demo_theme', themeName);
+      localStorage.setItem('jira_theme', themeName);
     }
 
     function cycleTheme() {
@@ -1289,31 +1273,95 @@
     }
 
     function loadData() {
-      const storedTickets = localStorage.getItem(STORAGE_KEY_TICKETS);
-      const storedNotes = localStorage.getItem(STORAGE_KEY_NOTES);
+      const storedTickets = localStorage.getItem('jira_tickets');
+      const storedNotes = localStorage.getItem('jira_notes');
 
-      // Start completely blank - no seeded private tickets
-      state.tickets = storedTickets ? JSON.parse(storedTickets) : [];
-      state.notes = storedNotes ? JSON.parse(storedNotes) : {};
+      if (storedTickets) {
+        state.tickets = JSON.parse(storedTickets);
+      } else {
+        state.tickets = [
+          {
+            id: 't-1',
+            jira_id: 'OPPR-9344',
+            title: 'Local acquiring in the Saudi Arabian market',
+            status: 'waiting_stakeholders',
+            priority: 'Medium',
+            alert_days: 3,
+            due_date: '2026-09-21T09:00',
+            jira_url: 'https://jira.company.com/browse/OPPR-9344',
+            shelf_url: 'https://confluence.company.com/pages/viewpage.action?pageId=102948',
+            created_at: new Date('2026-06-25T15:57:55').toISOString(),
+            last_updated: new Date('2026-09-10T10:00:00').toISOString(),
+            ai_summary: 'Setup for local acquiring in Saudi Arabia via PSP Checkout is complete, with the official go-live date now confirmed for September 21, 2026. All process documentation and announcement materials are finalized and scheduled for publication one day prior to launch.'
+          },
+          {
+            id: 't-2',
+            jira_id: 'OPPR-9934',
+            title: 'Hyperwallet Returned Transactions process update',
+            status: 'waiting_stakeholders',
+            priority: 'High',
+            alert_days: 2,
+            due_date: '',
+            jira_url: '',
+            shelf_url: '',
+            created_at: new Date('2026-09-01T10:00:00').toISOString(),
+            last_updated: new Date('2026-09-09T14:30:00').toISOString(),
+            ai_summary: null
+          },
+          {
+            id: 't-3',
+            jira_id: 'OPPR-7113',
+            title: 'Fare Increase Waiver',
+            status: 'waiting_stakeholders',
+            priority: 'Low',
+            alert_days: 5,
+            due_date: '',
+            jira_url: '',
+            shelf_url: '',
+            created_at: new Date('2026-08-15T09:00:00').toISOString(),
+            last_updated: new Date('2026-09-09T11:20:00').toISOString(),
+            ai_summary: null
+          }
+        ];
+        saveTicketsLocal();
+      }
+
+      if (storedNotes) {
+        state.notes = JSON.parse(storedNotes);
+      } else {
+        state.notes = {
+          't-1': [
+            {
+              id: 'n-1',
+              timestamp: '6/25/2026, 3:57:55 PM',
+              html: '<p>"Local acquiring in Saudi market with PSP Checkout. Process is ready. Waiting for live date. Checked again for live date with Ismini, but there is no update yet."</p>'
+            },
+            {
+              id: 'n-2',
+              timestamp: '9/3/2026, 10:42:36 AM',
+              html: '<p>Some movements in the Slack channel about testing. No live date yet mentioned. Leaving Jira parked.</p>'
+            }
+          ]
+        };
+        saveNotesLocal();
+      }
 
       updateTabCounts();
       renderTicketList();
 
-      if (state.tickets.length > 0) {
-        selectTicket(state.tickets[0].id);
-      } else {
-        document.getElementById('emptyState').style.display = 'flex';
-        document.getElementById('activeTicketContent').style.display = 'none';
+      const firstTabTicket = state.tickets.find(t => t.status === state.currentTab);
+      if (firstTabTicket) {
+        selectTicket(firstTabTicket.id);
       }
     }
 
     function saveTicketsLocal() {
-      localStorage.setItem(STORAGE_KEY_TICKETS, JSON.stringify(state.tickets));
+      localStorage.setItem('jira_tickets', JSON.stringify(state.tickets));
       updateTabCounts();
     }
 
     function saveNotesLocal() {
-      localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(state.notes));
+      localStorage.setItem('jira_notes', JSON.stringify(state.notes));
     }
 
     function updateTabCounts() {
@@ -1410,7 +1458,7 @@
         const dateStr = `${updateDate.getMonth() + 1}/${updateDate.getDate()}/${updateDate.getFullYear()}`;
 
         let statusBadgeText = 'WAITING REPLY';
-        if (ticket.status === 'waiting_stakeholders') statusBadgeText = 'WAITING STAKEHOLDERS';
+        if (ticket.status === 'waiting_stakeholders') statusBadgeText = 'WAITING REPLY FROM S...';
         else if (ticket.status === 'waiting_internal') statusBadgeText = 'WAITING INTERNAL';
         else if (ticket.status === 'parked') statusBadgeText = 'PARKED';
         else if (ticket.status === 'finished') statusBadgeText = 'FINISHED';
@@ -1423,7 +1471,7 @@
         card.innerHTML = `
           <div class="card-meta-top">
             <span class="card-key">${DOMPurify.sanitize(ticket.jira_id)}</span>
-            <span class="card-date">${dateStr}</span>
+            <span class="card-date">LAST UPDATE: ${dateStr}</span>
           </div>
           <div class="card-title">${DOMPurify.sanitize(ticket.title)}</div>
           <div class="card-badges">
@@ -1485,7 +1533,7 @@
       if (ticket.shelf_url) {
         linksRow.innerHTML += `
           <a href="${DOMPurify.sanitize(ticket.shelf_url)}" target="_blank" class="detail-link-item">
-            <i class="fa-solid fa-book-bookmark"></i> Confluence / Reference Link
+            <i class="fa-solid fa-book-bookmark"></i> Confluence / Shelf Documentation
           </a>
         `;
       }
@@ -1598,19 +1646,19 @@
 
       const notes = state.notes[ticket.id] || [];
       if (notes.length === 0) {
-        showToast('No notes to summarize. Log some updates first.', 'warning');
+        showToast('No logged notes available to summarize.', 'warning');
         return;
       }
 
-      const apiKey = state.geminiApiKey || localStorage.getItem('jira_demo_gemini_key');
+      const apiKey = state.geminiApiKey || localStorage.getItem('gemini_api_key');
       if (!apiKey) {
-        showToast('Please set your Gemini API key in Settings.', 'warning');
+        showToast('Please set your Gemini API key in Settings first.', 'warning');
         openSettingsModal();
         return;
       }
 
-      const notesHistory = notes.map((n, i) => `[Update ${i+1} at ${n.timestamp}]:\n${stripHtml(n.html)}`).join('\n\n');
-      const prompt = `Summarize these logged notes for Jira ticket ${ticket.jira_id} (${ticket.title}). Provide a concise 2-sentence executive update on what the task is and what work has been completed:\n\n${notesHistory}`;
+      const notesHistory = notes.map((n, i) => `[Entry ${i+1} at ${n.timestamp}]:\n${stripHtml(n.html)}`).join('\n\n');
+      const prompt = `You are a concise executive technical assistant. Summarize the following past written notes for ticket ${ticket.jira_id} (${ticket.title}). In 2-3 sentences, summarize what the issue was and what work/progress has been done. Be clear, professional, and direct:\n\n${notesHistory}`;
 
       const btn = document.getElementById('summarizeAiBtn');
       btn.disabled = true;
@@ -1633,12 +1681,12 @@
           document.getElementById('aiSummaryCard').style.display = 'flex';
           document.getElementById('aiSummaryText').textContent = summary;
           document.getElementById('aiSummaryTime').textContent = ticket.ai_summary_date;
-          showToast('AI Summary generated!', 'success');
+          showToast('AI Summary updated!', 'success');
         } else {
-          throw new Error('No summary');
+          throw new Error('No summary returned');
         }
       } catch (err) {
-        showToast('AI generation failed. Check your API key in Settings.', 'error');
+        showToast('AI Summarization failed. Check API key.', 'error');
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Summarize (AI)`;
@@ -1713,7 +1761,7 @@
           ticket.shelf_url = shelf_url;
           ticket.last_updated = now;
         }
-        showToast('Ticket updated', 'success');
+        showToast('Ticket updated successfully', 'success');
       } else {
         const newTicket = {
           id: 't-' + Date.now(),
@@ -1731,7 +1779,7 @@
         };
         state.tickets.unshift(newTicket);
         state.selectedTicketId = newTicket.id;
-        showToast('Ticket created', 'success');
+        showToast('Ticket created successfully', 'success');
       }
 
       saveTicketsLocal();
@@ -1751,7 +1799,7 @@
           <div class="template-card-header">
             <span>${tpl.title}</span>
             <div class="template-card-actions">
-              <button class="btn-header" onclick="insertTemplate('${tpl.id}')">
+              <button class="btn-header" onclick="insertTemplate('${tpl.id}')" title="Insert into active note">
                 <i class="fa-solid fa-arrow-down-to-bracket"></i> Insert
               </button>
               <button class="btn-icon" onclick="copyTemplate('${tpl.id}')" title="Copy to clipboard">
@@ -1786,9 +1834,9 @@
     };
 
     function openSettingsModal() {
-      document.getElementById('cfgSupabaseUrl').value = localStorage.getItem('jira_demo_supabase_url') || '';
-      document.getElementById('cfgSupabaseKey').value = localStorage.getItem('jira_demo_supabase_key') || '';
-      document.getElementById('cfgGeminiKey').value = localStorage.getItem('jira_demo_gemini_key') || '';
+      document.getElementById('cfgSupabaseUrl').value = localStorage.getItem('supabase_url') || '';
+      document.getElementById('cfgSupabaseKey').value = localStorage.getItem('supabase_key') || '';
+      document.getElementById('cfgGeminiKey').value = localStorage.getItem('gemini_api_key') || '';
       document.getElementById('settingsModal').classList.add('active');
     }
 
@@ -1797,22 +1845,23 @@
       const supaKey = document.getElementById('cfgSupabaseKey').value.trim();
       const geminiKey = document.getElementById('cfgGeminiKey').value.trim();
 
-      if (supaUrl) localStorage.setItem('jira_demo_supabase_url', supaUrl);
-      else localStorage.removeItem('jira_demo_supabase_url');
+      if (supaUrl) localStorage.setItem('supabase_url', supaUrl);
+      else localStorage.removeItem('supabase_url');
 
-      if (supaKey) localStorage.setItem('jira_demo_supabase_key', supaKey);
-      else localStorage.removeItem('jira_demo_supabase_key');
+      if (supaKey) localStorage.setItem('supabase_key', supaKey);
+      else localStorage.removeItem('supabase_key');
 
       if (geminiKey) {
-        localStorage.setItem('jira_demo_gemini_key', geminiKey);
+        localStorage.setItem('gemini_api_key', geminiKey);
         state.geminiApiKey = geminiKey;
       } else {
-        localStorage.removeItem('jira_demo_gemini_key');
+        localStorage.removeItem('gemini_api_key');
         state.geminiApiKey = '';
       }
 
+      initSupabase();
       closeAllModals();
-      showToast('Settings saved', 'success');
+      showToast('Workspace settings saved!', 'success');
     }
 
     function closeAllModals() {
@@ -1837,8 +1886,24 @@
         toast.style.transform = 'translateY(10px)';
         toast.style.transition = 'all 0.25s ease';
         setTimeout(() => toast.remove(), 250);
-      }, 3000);
+      }, 3200);
     }
   </script>
 </body>
 </html>
+```eofYou’ve got a massive text spill at the bottom of the screen—an unparsed AI response concatenated with backend Node.js code has leaked outside the UI container. 
+
+**Key Breakdown of the Issues**
+
+* **Raw Markdown & Code Leak:** The text at the bottom contains raw, unrendered Markdown tags (`### Summary of Changes`, `**Zero EmailJS Footprint:**`) and standard backend boilerplate (`const express = require('express');`) dumped into plain text.
+* **Layout Overflow:** The spilled content breaks completely out of the app's dark-mode frame (`Tracker Workspace`) and overflows onto a plain black backdrop at the bottom of the browser window.
+* **Inline Prompt/Instruction Spill:** It mixes user-facing summary notes, architectural descriptions (*"Ditching EmailJS for your own backend setup..."*), and raw template code into one continuous string.
+
+**Root Cause**
+
+An API response payload was likely dumped directly into an HTML element (or injected into the DOM root during a debug/test run) without being passed through a Markdown renderer (e.g., `react-markdown` or `marked`) or contained within a dedicated preformatted code block. 
+
+**How to Fix It**
+
+* **Frontend:** Wrap the summary output in a Markdown parsing component and set strict CSS bounds (`overflow-y: auto`, fixed `max-height`) on the text container.
+* **Payload Sanitation:** Ensure the backend sends clean JSON objects separating the *explanation text* from *code blocks*, rather than returning one concatenated raw string.
