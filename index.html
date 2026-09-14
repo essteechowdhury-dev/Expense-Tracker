@@ -1,2097 +1,431 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jira Tracker Workspace</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Expenses">
+<title>Expense Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght=300;400;500;600&family=DM+Mono:wght=400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+<style>
+  :root {
+    --bg: #f7f6f3; --surface: #ffffff; --border: rgba(0,0,0,0.08); --border2: rgba(0,0,0,0.14);
+    --text: #1a1a18; --text2: #6b6b67; --text3: #9b9b96; --accent: #2d6a4f; --accent-light: #e8f5ef;
+    --accent2: #d62828; --accent2-light: #fce8e8; --radius: 14px; --radius-sm: 8px; --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; max-width: 430px; margin: 0 auto; position: relative; overflow-x: hidden; }
   
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 1.25rem 0.75rem; position: sticky; top: 0; z-index: 50; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; }
+  .header-title { font-size: 18px; font-weight: 600; }
+  .month-nav { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .month-nav button { background: none; border: 1px solid var(--border2); border-radius: 6px; padding: 4px 8px; font-size: 13px; cursor: pointer; color: var(--text2); }
+  .month-label { font-size: 13px; font-weight: 500; flex: 1; text-align: center; }
   
-  <!-- Quill.js Rich Text Editor -->
-  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
-  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+  .dashboard-content { padding: 1.25rem 1.25rem 120px; }
   
-  <!-- DOMPurify for strict client-side XSS prevention -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
-
-  <!-- Supabase JS Client (Zero outbound email dependencies) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    /* =========================================================
-       THEMES & CSS VARIABLES
-       ========================================================= */
-    :root, [data-theme="obsidian"] {
-      --bg-main: #070d1e;
-      --bg-panel: #0d172e;
-      --bg-card: #122144;
-      --bg-card-hover: #172a56;
-      --bg-editor: #091326;
-      --border-color: #1b2f5b;
-      --border-subtle: #142447;
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --accent-primary: #38bdf8;
-      --accent-hover: #0284c7;
-      --accent-amber: #f59e0b;
-      --accent-green: #10b981;
-      --accent-rose: #f43f5e;
-      --badge-bg: #1e293b;
-      --tab-active-border: #38bdf8;
-      --card-selected-bg: #1a2d59;
-    }
-
-    [data-theme="midnight"] {
-      --bg-main: #090d16;
-      --bg-panel: #0f1523;
-      --bg-card: #161f33;
-      --bg-card-hover: #1e2a45;
-      --bg-editor: #0c121e;
-      --border-color: #233152;
-      --border-subtle: #18233c;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --accent-primary: #6366f1;
-      --accent-hover: #4f46e5;
-      --accent-amber: #f59e0b;
-      --accent-green: #10b981;
-      --accent-rose: #f43f5e;
-      --tab-active-border: #6366f1;
-      --card-selected-bg: #233152;
-    }
-
-    [data-theme="forest"] {
-      --bg-main: #061512;
-      --bg-panel: #0b221d;
-      --bg-card: #11332c;
-      --bg-card-hover: #164239;
-      --bg-editor: #081a16;
-      --border-color: #1a4d41;
-      --border-subtle: #123830;
-      --text-main: #f0fdf4;
-      --text-muted: #86efac;
-      --text-dim: #4ade80;
-      --accent-primary: #10b981;
-      --accent-hover: #059669;
-      --accent-amber: #fbbf24;
-      --accent-green: #34d399;
-      --accent-rose: #fb7185;
-      --tab-active-border: #10b981;
-      --card-selected-bg: #164239;
-    }
-
-    [data-theme="clean-light"] {
-      --bg-main: #f8fafc;
-      --bg-panel: #ffffff;
-      --bg-card: #f1f5f9;
-      --bg-card-hover: #e2e8f0;
-      --bg-editor: #ffffff;
-      --border-color: #cbd5e1;
-      --border-subtle: #e2e8f0;
-      --text-main: #0f172a;
-      --text-muted: #475569;
-      --text-dim: #64748b;
-      --accent-primary: #0284c7;
-      --accent-hover: #0369a1;
-      --accent-amber: #d97706;
-      --accent-green: #059669;
-      --accent-rose: #e11d48;
-      --tab-active-border: #0284c7;
-      --card-selected-bg: #e0f2fe;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background-color: var(--bg-main);
-      color: var(--text-main);
-      font-family: 'Inter', sans-serif;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* =========================================================
-       TOP NAVIGATION BAR
-       ========================================================= */
-    .app-header {
-      background-color: var(--bg-panel);
-      border-bottom: 1px solid var(--border-color);
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      flex-shrink: 0;
-      z-index: 10;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .btn-icon {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 16px;
-      padding: 8px;
-      border-radius: 6px;
-      transition: all 0.15s;
-    }
-
-    .btn-icon:hover {
-      background: var(--border-subtle);
-      color: var(--text-main);
-    }
-
-    .brand-badge {
-      background: #0052cc;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 4px 8px;
-      border-radius: 4px;
-      letter-spacing: 0.5px;
-    }
-
-    .brand-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-main);
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .btn-header {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      font-size: 13px;
-      font-weight: 500;
-      padding: 7px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      transition: background 0.15s, border-color 0.15s;
-    }
-
-    .btn-header:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--accent-primary);
-    }
-
-    .btn-primary {
-      background: var(--accent-primary);
-      border: 1px solid var(--accent-primary);
-      color: #0b1329;
-      font-weight: 600;
-    }
-
-    .btn-primary:hover {
-      background: var(--accent-hover);
-      border-color: var(--accent-hover);
-      color: #fff;
-    }
-
-    /* =========================================================
-       SUB-NAV TABS BAR
-       ========================================================= */
-    .tabs-bar {
-      background: var(--bg-panel);
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      gap: 24px;
-      padding: 0 24px;
-      height: 44px;
-      align-items: stretch;
-      flex-shrink: 0;
-    }
-
-    .tab-btn {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      position: relative;
-      padding: 0 4px;
-      transition: color 0.15s;
-    }
-
-    .tab-btn:hover {
-      color: var(--text-main);
-    }
-
-    .tab-btn.active {
-      color: var(--accent-primary);
-      font-weight: 600;
-    }
-
-    .tab-btn.active::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: var(--tab-active-border);
-      border-radius: 3px 3px 0 0;
-    }
-
-    .tab-count {
-      background: var(--border-color);
-      color: var(--text-main);
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 7px;
-      border-radius: 10px;
-    }
-
-    /* =========================================================
-       MAIN WORKSPACE LAYOUT
-       ========================================================= */
-    .workspace-body {
-      display: flex;
-      flex: 1;
-      height: calc(100vh - 100px);
-      overflow: hidden;
-    }
-
-    /* Left Sidebar Ticket List */
-    .sidebar {
-      width: 360px;
-      background: var(--bg-panel);
-      border-right: 1px solid var(--border-color);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      overflow: hidden;
-      transition: width 0.2s ease;
-    }
-
-    .sidebar.collapsed {
-      width: 0;
-      border-right: none;
-    }
-
-    .sidebar-controls {
-      padding: 16px;
-      border-bottom: 1px solid var(--border-subtle);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .search-box {
-      background: var(--bg-main);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      padding: 8px 12px;
-      gap: 8px;
-    }
-
-    .search-box input {
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      font-size: 13px;
-      outline: none;
-      width: 100%;
-    }
-
-    .sort-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-dim);
-      letter-spacing: 0.5px;
-    }
-
-    .sort-select {
-      background: var(--bg-main);
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      font-size: 12px;
-      border-radius: 4px;
-      padding: 4px 8px;
-      outline: none;
-      cursor: pointer;
-    }
-
-    .ticket-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .ticket-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 14px;
-      cursor: pointer;
-      transition: transform 0.1s, border-color 0.15s, background 0.15s;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .ticket-card:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--accent-primary);
-    }
-
-    .ticket-card.selected {
-      background: var(--card-selected-bg);
-      border-color: var(--accent-primary);
-      box-shadow: 0 0 0 1px var(--accent-primary);
-    }
-
-    .card-meta-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-    }
-
-    .card-key {
-      font-weight: 700;
-      color: var(--text-main);
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .card-date {
-      color: var(--text-dim);
-      font-size: 11px;
-    }
-
-    .card-title {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-main);
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .card-badges {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 4px;
-    }
-
-    /* Status & Alert Badges */
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-
-    .badge-status {
-      background: rgba(56, 189, 248, 0.12);
-      color: var(--accent-primary);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-    }
-
-    .badge-prio-high {
-      background: rgba(244, 63, 94, 0.15);
-      color: var(--accent-rose);
-      border: 1px solid rgba(244, 63, 94, 0.3);
-    }
-
-    .badge-prio-med {
-      background: rgba(245, 158, 11, 0.15);
-      color: var(--accent-amber);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-
-    .badge-prio-low {
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--accent-green);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    /* IN-APP VISUAL DEADLINE BADGES (Replaces email notifications) */
-    .badge-alert-inactive {
-      background: rgba(245, 158, 11, 0.2);
-      color: #fcd34d;
-      border: 1px solid var(--accent-amber);
-      animation: pulseAlert 2.5s infinite;
-    }
-
-    .badge-alert-urgent {
-      background: rgba(244, 63, 94, 0.25);
-      color: #fecdd3;
-      border: 1px solid var(--accent-rose);
-      animation: pulseAlert 1.5s infinite;
-    }
-
-    @keyframes pulseAlert {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.75; }
-    }
-
-    /* =========================================================
-       RIGHT DETAIL PANEL
-       ========================================================= */
-    .detail-view {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: var(--bg-main);
-      overflow-y: auto;
-      padding: 24px 32px;
-      position: relative;
-    }
-
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      color: var(--text-dim);
-      gap: 16px;
-    }
-
-    .empty-state i {
-      font-size: 56px;
-      color: var(--border-color);
-    }
-
-    .detail-header {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .detail-top-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .meta-badges-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .detail-actions-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .status-dropdown {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      font-size: 13px;
-      font-weight: 600;
-      padding: 7px 12px;
-      border-radius: 6px;
-      outline: none;
-      cursor: pointer;
-    }
-
-    .status-dropdown:hover {
-      border-color: var(--accent-primary);
-    }
-
-    .detail-title-section {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .detail-key-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .detail-key {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .btn-link-icon {
-      color: var(--accent-primary);
-      text-decoration: none;
-      font-size: 16px;
-    }
-
-    .detail-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text-main);
-    }
-
-    .detail-links-row {
-      display: flex;
-      gap: 16px;
-      font-size: 13px;
-      margin-top: 4px;
-    }
-
-    .detail-link-item {
-      color: var(--accent-primary);
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .detail-link-item:hover {
-      text-decoration: underline;
-    }
-
-    /* AI Summarization Card */
-    .ai-action-bar {
-      margin-top: 14px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .btn-ai-summarize {
-      background: linear-gradient(135deg, #3b82f6, #6366f1);
-      border: none;
-      color: #fff;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
-      transition: transform 0.1s, opacity 0.15s;
-    }
-
-    .btn-ai-summarize:hover {
-      opacity: 0.95;
-      transform: translateY(-1px);
-    }
-
-    .btn-ai-summarize:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .ai-summary-box {
-      background: #112247;
-      border: 1px solid #1e3a70;
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin-top: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      position: relative;
-    }
-
-    .ai-summary-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      color: var(--accent-primary);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-    }
-
-    .ai-summary-content {
-      font-size: 14px;
-      line-height: 1.6;
-      color: #e2e8f0;
-      font-style: italic;
-    }
-
-    /* Update & Note History List */
-    .history-section {
-      margin-top: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      flex: 1;
-    }
-
-    .note-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 16px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .note-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-      color: var(--text-dim);
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .note-body {
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--text-main);
-    }
-
-    .note-body img {
-      max-width: 100%;
-      border-radius: 6px;
-      margin-top: 10px;
-      border: 1px solid var(--border-color);
-    }
-
-    .note-body ul, .note-body ol {
-      padding-left: 20px;
-      margin: 8px 0;
-    }
-
-    /* Bottom Comment Composer */
-    .composer-section {
-      margin-top: 28px;
-      background: var(--bg-panel);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .composer-header {
-      padding: 10px 16px;
-      font-size: 12px;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border-subtle);
-      background: var(--bg-card);
-    }
-
-    /* Quill Overrides for Modern Dark Theme */
-    .ql-toolbar.ql-snow {
-      background: var(--bg-card);
-      border: none !important;
-      border-bottom: 1px solid var(--border-color) !important;
-    }
-
-    .ql-container.ql-snow {
-      border: none !important;
-      background: var(--bg-editor);
-      color: var(--text-main);
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      min-height: 140px;
-    }
-
-    .ql-editor.ql-blank::before {
-      color: var(--text-dim);
-      font-style: normal;
-    }
-
-    .ql-snow .ql-stroke {
-      stroke: var(--text-muted) !important;
-    }
-
-    .ql-snow .ql-fill {
-      fill: var(--text-muted) !important;
-    }
-
-    .ql-snow .ql-picker {
-      color: var(--text-muted) !important;
-    }
-
-    .composer-footer {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding: 10px 16px;
-      background: var(--bg-card);
-      border-top: 1px solid var(--border-subtle);
-    }
-
-    .btn-post-update {
-      background: var(--accent-primary);
-      border: none;
-      color: #0b1329;
-      font-weight: 700;
-      font-size: 13px;
-      padding: 8px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: background 0.15s;
-    }
-
-    .btn-post-update:hover {
-      background: var(--accent-hover);
-      color: #fff;
-    }
-
-    /* =========================================================
-       MODALS (New Ticket, Templates, Settings)
-       ========================================================= */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 20px;
-    }
-
-    .modal-overlay.active {
-      display: flex;
-    }
-
-    .modal-card {
-      background: var(--bg-panel);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      width: 100%;
-      max-width: 620px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 24px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .modal-title {
-      font-size: 16px;
-      font-weight: 700;
-    }
-
-    .modal-body {
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      max-height: 75vh;
-      overflow-y: auto;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .form-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    .form-input, .form-select, .form-textarea {
-      background: var(--bg-main);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      color: var(--text-main);
-      font-family: inherit;
-      font-size: 13px;
-      padding: 9px 12px;
-      outline: none;
-    }
-
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
-      border-color: var(--accent-primary);
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      padding: 16px 24px;
-      border-top: 1px solid var(--border-color);
-      background: var(--bg-card);
-    }
-
-    /* Template Cards inside Template Modal */
-    .template-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .template-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .template-card-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    /* Notification Toast */
-    .toast-container {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 9999;
-    }
-
-    .toast {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 13px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      animation: slideIn 0.2s ease-out;
-    }
-
-    .toast.success { border-left: 4px solid var(--accent-green); }
-    .toast.warning { border-left: 4px solid var(--accent-amber); }
-    .toast.error { border-left: 4px solid var(--accent-rose); }
-
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-  </style>
+  .salary-card { background: var(--surface); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1rem; border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; align-items: center; justify-content: space-between; }
+  .salary-info-block { display: flex; align-items: center; gap: 10px; }
+  .salary-label { font-size: 14px; color: var(--text2); font-weight: 500; }
+  .salary-display-val { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 600; color: var(--text); }
+  .salary-input-inline { border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 14px; width: 90px; text-align: right; font-family: 'DM Mono', monospace; outline: none; background: var(--bg); color: var(--text); }
+  .salary-edit-trigger { background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--text2); }
+  
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--surface); border-radius: var(--radius-sm); padding: 1rem; border: 1px solid var(--border); box-shadow: var(--shadow); }
+  .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .stat-value { font-size: 20px; font-weight: 600; }
+  .stat-value.positive { color: var(--accent); }
+  .stat-value.negative { color: var(--accent2); }
+  
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; margin-top: 1.5rem; }
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  
+  .cat-breakdown { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 0.5rem 1.25rem; margin-bottom: 1.5rem; box-shadow: var(--shadow); overflow: hidden; }
+  .cat-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--bg); font-size: 14px; cursor: pointer; user-select: none; transition: background 0.15s ease; margin: 0 -1.25rem; padding-left: 1.25rem; padding-right: 1.25rem; }
+  .cat-row:last-child { border-bottom: none; }
+  .cat-row:active { background: var(--bg); }
+  .cat-row.filtered-active { background: var(--accent-light); font-weight: 600; }
+  .cat-row-label { display: flex; align-items: center; gap: 8px; color: var(--text); }
+  .cat-row-amount { font-weight: 500; color: var(--text); font-family: 'DM Mono', monospace; display: flex; align-items: center; gap: 6px; }
+  
+  .filter-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(45,106,79,0.2); }
+  .filter-clear-btn { background: none; border: none; font-size: 14px; color: var(--accent); cursor: pointer; padding: 0 2px; font-weight: bold; }
+
+  .tx-list { display: flex; flex-direction: column; gap: 8px; }
+  .tx-item { background: var(--surface); border-radius: var(--radius-sm); border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  .tx-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .tx-info { flex: 1; min-width: 0; }
+  .tx-desc { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx-cat { font-size: 12px; color: var(--text3); margin-top: 1px; }
+  .tx-right { text-align: right; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .tx-amount { font-size: 15px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .tx-amount.out { color: var(--accent2); }
+  .tx-amount.in { color: var(--accent); }
+  .tx-delete-btn { background: none; border: 1px solid var(--border2); border-radius: 6px; font-size: 12px; padding: 4px 8px; cursor: pointer; color: var(--text2); transition: all 0.1s; }
+  .tx-delete-btn:active { background: var(--accent2-light); color: var(--accent2); border-color: var(--accent2); }
+  
+  .fab { position: fixed; bottom: calc(24px + var(--safe-bottom)); right: 24px; width: 56px; height: 56px; border-radius: 28px; background: var(--accent); color: #fff; border: none; font-size: 28px; cursor: pointer; box-shadow: 0 4px 20px rgba(45,106,79,0.4); display: flex; align-items: center; justify-content: center; z-index: 40; }
+  
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; display: none; align-items: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; padding: 1.25rem 1.25rem calc(1.25rem + var(--safe-bottom)); max-height: 92dvh; overflow-y: auto; }
+  .type-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
+  .type-btn { padding: 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: none; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--text2); }
+  .type-btn.active.expense { background: var(--accent2-light); border-color: var(--accent2); color: var(--accent2); }
+  .type-btn.active.income { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 13px; color: var(--text2); font-weight: 500; margin-bottom: 6px; }
+  .field input, .field select { width: 100%; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 11px 12px; font-size: 15px; background: var(--bg); color: var(--text); outline: none; }
+  .save-btn { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); padding: 14px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 1rem; }
+  .loading { text-align: center; padding: 2rem; color: var(--text3); font-size: 14px; }
+  
+  .cat-home { background: #e3f2f9; color: #1a5f7a; }
+  .cat-patision { background: #fff3e0; color: #e07b00; }
+  .cat-supermarket { background: #e8f5ef; color: #2d6a4f; }
+  .cat-transportation { background: #ede7f6; color: #5e35b1; }
+  .cat-entertainment { background: #fce4ec; color: #c2185b; }
+  .cat-savings { background: #e8eaf6; color: #3949ab; }
+  .cat-others { background: #f5f5f5; color: #616161; }
+  .cat-received { background: #e8f5ef; color: #2d6a4f; }
+</style>
 </head>
 <body>
 
-  <!-- =========================================================
-       TOP APP HEADER
-       ========================================================= -->
-  <header class="app-header">
-    <div class="header-left">
-      <button class="btn-icon" id="toggleSidebarBtn" title="Toggle Sidebar">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      <span class="brand-badge">Jira</span>
-      <span class="brand-title">Tracker Workspace</span>
+<div id="app">
+  <div class="header">
+    <div class="header-top">
+      <div class="header-title" id="header-month-title">Loading Ledger...</div>
+    </div>
+    <div class="month-nav">
+      <button onclick="changeMonth(-1)">‹ Prev</button>
+      <div class="month-label" id="month-label">Loading Ledger...</div>
+      <button onclick="changeMonth(1)">Next ›</button>
+    </div>
+  </div>
+  
+  <div class="dashboard-content">
+    <div class="salary-card">
+      <div class="salary-info-block">
+        <label class="salary-label">Salary €</label>
+        <div id="salary-display" class="salary-display-val">0</div>
+        <input type="number" id="salary-input" class="salary-input-inline" style="display:none" onblur="saveSalary()" onkeydown="if(event.key==='Enter')saveSalary()">
+      </div>
+      <button class="salary-edit-trigger" onclick="toggleSalaryEdit()">Edit</button>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total received</div>
+        <div class="stat-value positive" id="stat-received">€0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total spent</div>
+        <div class="stat-value negative" id="stat-spent">€0</div>
+      </div>
     </div>
     
-    <div class="header-right">
-      <button class="btn-header" id="themeBtn" title="Change Visual Palette">
-        <i class="fa-solid fa-palette" style="color:#f59e0b;"></i> Theme
-      </button>
-      <button class="btn-header" id="templatesBtn" title="Saved Template Spaces">
-        <i class="fa-solid fa-folder-open" style="color:#a855f7;"></i> Templates
-      </button>
-      <button class="btn-header" id="settingsBtn" title="Database & AI Setup">
-        <i class="fa-solid fa-gear"></i> Settings
-      </button>
-      <button class="btn-header btn-primary" id="newTicketBtn">
-        <i class="fa-solid fa-plus"></i> New Ticket
-      </button>
+    <div class="stat-grid" style="grid-template-columns: 1fr;">
+      <div class="stat-card" style="text-align: center;">
+        <div class="stat-label">Total left</div>
+        <div class="stat-value" id="stat-left" style="font-size: 26px;">€0</div>
+      </div>
     </div>
-  </header>
 
-  <!-- =========================================================
-       WORKFLOW TABS
-       ========================================================= -->
-  <nav class="tabs-bar">
-    <button class="tab-btn active" data-tab="waiting_stakeholders">
-      Waiting Reply (Stakeholders) <span class="tab-count" id="count-waiting_stakeholders">0</span>
-    </button>
-    <button class="tab-btn" data-tab="waiting_internal">
-      Waiting Reply (Internal) <span class="tab-count" id="count-waiting_internal">0</span>
-    </button>
-    <button class="tab-btn" data-tab="parked">
-      Parked <span class="tab-count" id="count-parked">0</span>
-    </button>
-    <button class="tab-btn" data-tab="finished">
-      Finished <span class="tab-count" id="count-finished">0</span>
-    </button>
-  </nav>
+    <div class="section-header">
+      <div class="section-title">Spending By Category</div>
+    </div>
+    <div class="cat-breakdown" id="cat-breakdown-panel">
+      <div style="text-align:center; padding:1rem; color:var(--text3); font-size:13px;">No item metrics logged.</div>
+    </div>
 
-  <!-- =========================================================
-       MAIN WORKSPACE
-       ========================================================= -->
-  <div class="workspace-body">
+    <div class="section-header">
+      <div class="section-title" id="ledger-title-area">Transactions Ledger</div>
+    </div>
+    <div class="tx-list" id="ledger-entries-list">
+      <div class="loading">Fetching secure cloud records...</div>
+    </div>
+  </div>
+
+  <button class="fab" onclick="openAddModal()">+</button>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="type-toggle">
+      <button class="type-btn active expense" id="type-expense" onclick="setType('expense')">Expense</button>
+      <button class="type-btn income" id="type-income" onclick="setType('income')">Received</button>
+    </div>
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="field-date">
+    </div>
+    <div class="field" id="cat-wrapper">
+      <label>Category</label>
+      <select id="field-category">
+        <option value="Supermarket">🛒 Supermarket</option>
+        <option value="Home">🏠 Home</option>
+        <option value="Patision House">🏢 Patision House</option>
+        <option value="Transportation">🚇 Transportation</option>
+        <option value="Entertainment">🎬 Entertainment</option>
+        <option value="Savings">🏦 Savings</option>
+        <option value="Others">📦 Others</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <input type="text" id="field-desc" placeholder="What was this for?">
+    </div>
+    <div class="field">
+      <label id="amount-label">Amount (€)</label>
+      <input type="number" id="field-amount" placeholder="0.00" step="0.01">
+    </div>
+    <button class="save-btn" onclick="saveTransaction()">Save Entry</button>
+  </div>
+</div>
+
+<script>
+let sb = null, currentMonthKey = '', monthData = { salary: 0, transactions: [] }, currentType = 'expense';
+let activeCategoryFilter = null;
+
+const CAT_ICONS = { Home:'🏠', 'Patision House':'🏢', Supermarket:'🛒', Transportation:'🚇', Entertainment:'🎬', Savings:'🏦', Others:'📦', Received:'💰' };
+const CAT_COLORS = { Home:'cat-home', 'Patision House':'cat-patision', Supermarket:'cat-supermarket', Transportation:'cat-transportation', Entertainment:'cat-entertainment', Others:'cat-others', Savings:'cat-savings', Received:'cat-received' };
+
+function getMonthKey(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+function formatMonthLabel(key) { const [y,m] = key.split('-'); return new Date(y, m-1, 1).toLocaleDateString('en-GB',{month:'long',year:'numeric'}); }
+function fmt(n) { return '€' + Math.abs(n).toFixed(2).replace(/\.00$/,''); }
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function initApp() {
+  currentMonthKey = getMonthKey(new Date());
+  updateMonthLabels();
+  await loadMonth();
+}
+
+function updateMonthLabels() {
+  const lbl = formatMonthLabel(currentMonthKey);
+  document.getElementById('month-label').textContent = lbl;
+  document.getElementById('header-month-title').textContent = lbl;
+}
+
+async function changeMonth(dir) {
+  activeCategoryFilter = null;
+  const [y,m] = currentMonthKey.split('-').map(Number);
+  currentMonthKey = getMonthKey(new Date(y, m-1+dir, 1));
+  updateMonthLabels();
+  await loadMonth();
+}
+
+async function loadMonth() {
+  try {
+    document.getElementById('ledger-entries-list').innerHTML = '<div class="loading">Updating ledger cards...</div>';
     
-    <!-- LEFT SIDEBAR: Ticket List -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-controls">
-        <div class="search-box">
-          <i class="fa-solid fa-magnifying-glass" style="color:var(--text-dim);"></i>
-          <input type="text" id="searchInput" placeholder="Search Jiras...">
-        </div>
-        <div class="sort-row">
-          <span>SORT:</span>
-          <select class="sort-select" id="sortSelect">
-            <option value="last_updated">Last Updated</option>
-            <option value="due_date">Due Date</option>
-            <option value="priority">Priority</option>
-            <option value="jira_id">Jira ID</option>
-          </select>
-        </div>
-      </div>
+    const { data: sData, error: sErr } = await sb.from('monthly_salary').select('salary').eq('month_key', currentMonthKey).maybeSingle();
+    if (sErr) throw sErr;
+    
+    const { data: tData, error: tErr } = await sb.from('transactions').select('*').eq('month_key', currentMonthKey).order('date', {ascending:false});
+    if (tErr) throw tErr;
+    
+    monthData = { salary: sData?.salary || 0, transactions: tData || [] };
+    render();
+  } catch(e) { 
+    document.getElementById('ledger-entries-list').innerHTML = `<div class="loading" style="color:var(--accent2)">Data Load Error: ${e.message || e}</div>`; 
+  }
+}
 
-      <div class="ticket-list" id="ticketListContainer">
-        <!-- Ticket cards injected dynamically -->
-      </div>
-    </aside>
+function toggleCategoryFilter(category) {
+  activeCategoryFilter = (activeCategoryFilter === category) ? null : category;
+  render();
+}
 
-    <!-- RIGHT MAIN PANEL: Ticket Detail View -->
-    <main class="detail-view" id="detailView">
-      <div class="empty-state" id="emptyState">
-        <i class="fa-solid fa-clipboard-check"></i>
-        <p>Select a Jira ticket from the list or click "+ New Ticket" to begin tracking.</p>
-      </div>
+function clearCategoryFilter() {
+  activeCategoryFilter = null;
+  render();
+}
 
-      <div id="activeTicketContent" style="display:none; flex-direction:column; height:100%;">
-        
-        <!-- Detail Header -->
-        <div class="detail-header">
-          <div class="detail-top-row">
-            <div class="meta-badges-left" id="detailBadges">
-              <!-- Priority badge & In-App Alert badges will appear here -->
-            </div>
-            
-            <div class="detail-actions-right">
-              <!-- Changing this status instantly updates database & routes ticket to new tab -->
-              <select class="status-dropdown" id="detailStatusSelect">
-                <option value="waiting_stakeholders">Waiting Reply from Stakeholders</option>
-                <option value="waiting_internal">Waiting Reply (Internal)</option>
-                <option value="parked">Parked</option>
-                <option value="finished">Finished</option>
-              </select>
-              <button class="btn-header" id="editTicketBtn">
-                <i class="fa-solid fa-pencil"></i> Edit
-              </button>
-            </div>
-          </div>
-
-          <div class="detail-title-section">
-            <div class="detail-key-row">
-              <span class="detail-key" id="detailKey"></span>
-              <a href="#" target="_blank" class="btn-link-icon" id="detailExternalJiraLink" title="Open in Jira">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-              </a>
-            </div>
-            <h2 class="detail-title" id="detailTitle"></h2>
-            
-            <div class="detail-links-row" id="detailLinksRow">
-              <!-- Attached Shelf or Spec URLs -->
-            </div>
-          </div>
-
-          <!-- AI Action Row -->
-          <div class="ai-action-bar">
-            <button class="btn-ai-summarize" id="summarizeAiBtn">
-              <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Summarize (AI)
-            </button>
-          </div>
-
-          <!-- AI Summary Box -->
-          <div class="ai-summary-box" id="aiSummaryCard" style="display:none;">
-            <div class="ai-summary-header">
-              <span><i class="fa-solid fa-sparkles"></i> ✨ AI AUTO-SUMMARY</span>
-              <span id="aiSummaryTime" style="font-size:10px; color:var(--text-dim);"></span>
-            </div>
-            <p class="ai-summary-content" id="aiSummaryText"></p>
-          </div>
-        </div>
-
-        <!-- Note History Section -->
-        <div class="history-section" id="noteHistoryContainer">
-          <!-- Rendered note cards injected dynamically -->
-        </div>
-
-        <!-- Quill Note Composer -->
-        <div class="composer-section">
-          <div class="composer-header">
-            <span>Add a comment... (Ctrl+V to paste images directly)</span>
-          </div>
-          <div id="quillEditor"></div>
-          <div class="composer-footer">
-            <button class="btn-post-update" id="postUpdateBtn">
-              Post Update <i class="fa-solid fa-arrow-up"></i>
-            </button>
-          </div>
-        </div>
-
-      </div>
-    </main>
-  </div>
-
-  <!-- =========================================================
-       MODAL: CREATE / EDIT TICKET
-       ========================================================= -->
-  <div class="modal-overlay" id="ticketModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title" id="ticketModalTitle">Create New Jira Ticket</h3>
-        <button class="btn-icon closeModalBtn"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="modalTicketId">
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Jira Key (e.g. OPPR-9344) *</label>
-            <input type="text" class="form-input" id="modalJiraKey" placeholder="PROJ-1234" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Priority</label>
-            <select class="form-select" id="modalPriority">
-              <option value="Medium">Medium Prio</option>
-              <option value="High">High Prio</option>
-              <option value="Low">Low Prio</option>
-              <option value="Critical">Critical Prio</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Summary / Task Title *</label>
-          <input type="text" class="form-input" id="modalSummary" placeholder="Task description..." required>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Initial Status</label>
-            <select class="form-select" id="modalStatus">
-              <option value="waiting_stakeholders">Waiting Reply (Stakeholders)</option>
-              <option value="waiting_internal">Waiting Reply (Internal)</option>
-              <option value="parked">Parked</option>
-              <option value="finished">Finished</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Inactivity Alert Threshold</label>
-            <select class="form-select" id="modalAlertDays">
-              <option value="2">Alert if inactive for 2 Days</option>
-              <option value="3" selected>Alert if inactive for 3 Days</option>
-              <option value="5">Alert if inactive for 5 Days</option>
-              <option value="7">Alert if inactive for 7 Days</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Target Due Date (Optional)</label>
-            <input type="datetime-local" class="form-input" id="modalDueDate">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Direct Jira URL</label>
-            <input type="url" class="form-input" id="modalJiraUrl" placeholder="https://jira.company.com/browse/...">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Shelf / Confluence / Reference Link</label>
-          <input type="url" class="form-input" id="modalShelfUrl" placeholder="https://confluence.company.com/pages/...">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-header closeModalBtn">Cancel</button>
-        <button class="btn-header btn-primary" id="saveTicketBtn">Save Ticket</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- =========================================================
-       MODAL: TEMPLATE SPACES
-       ========================================================= -->
-  <div class="modal-overlay" id="templatesModal">
-    <div class="modal-card" style="max-width: 720px;">
-      <div class="modal-header">
-        <h3 class="modal-title">Saved Template Spaces</h3>
-        <button class="btn-icon closeModalBtn"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="modal-body">
-        <p style="font-size:13px; color:var(--text-muted);">
-          Reusable standardized formats. Click "Insert into Editor" to paste directly into your active note, or copy to clipboard.
-        </p>
-        <div id="templatesList" style="display:flex; flex-direction:column; gap:12px;">
-          <!-- Templates injected dynamically -->
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-header closeModalBtn">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- =========================================================
-       MODAL: CONFIG & SETUP (Supabase & Gemini AI)
-       ========================================================= */ -->
-  <div class="modal-overlay" id="settingsModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">Workspace Configuration</h3>
-        <button class="btn-icon closeModalBtn"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Supabase URL (Database Host)</label>
-          <input type="text" class="form-input" id="cfgSupabaseUrl" placeholder="https://xyzcompany.supabase.co">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Supabase Anon Key (Public Key with RLS)</label>
-          <input type="password" class="form-input" id="cfgSupabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Google Gemini API Key (1-Click AI Summarizer)</label>
-          <input type="password" class="form-input" id="cfgGeminiKey" placeholder="AIzaSy...">
-          <span style="font-size:11px; color:var(--text-dim); margin-top:4px;">
-            Stored safely in your local browser storage. Powers note summarization.
-          </span>
-        </div>
-        <div style="background:var(--bg-main); padding:12px; border-radius:6px; border:1px solid var(--border-color); font-size:12px; color:var(--text-muted);">
-          <i class="fa-solid fa-shield-halved" style="color:var(--accent-green);"></i>
-          <strong>Zero External Exfiltration:</strong> No automated email background workers or third-party email APIs exist in this build. All deadline alerts are rendered locally on your screen.
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-header closeModalBtn">Cancel</button>
-        <button class="btn-header btn-primary" id="saveSettingsBtn">Save Configuration</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast Container -->
-  <div class="toast-container" id="toastContainer"></div>
-
-  <!-- =========================================================
-       JAVASCRIPT APPLICATION LOGIC
-       ========================================================= -->
-  <script>
-    // 1. STATE MANAGEMENT
-    const state = {
-      currentTab: 'waiting_stakeholders',
-      selectedTicketId: null,
-      tickets: [],
-      notes: {}, // ticketId -> array of note objects
-      theme: localStorage.getItem('jira_theme') || 'obsidian',
-      quill: null,
-      supabaseClient: null,
-      geminiApiKey: localStorage.getItem('gemini_api_key') || ''
-    };
-
-    // Default Reusable Templates
-    const defaultTemplates = [
-      {
-        id: 'tpl-1',
-        title: 'Stakeholder Status Ingestion',
-        content: '<p><strong>Current Status:</strong> Ready for testing on staging environment.</p><p><strong>Blockers:</strong> Awaiting stakeholder confirmation on account credentials.</p><p><strong>Next Action:</strong> Follow-up if no reply by tomorrow.</p>'
-      },
-      {
-        id: 'tpl-2',
-        title: 'Bug Diagnostic & Escalation',
-        content: '<p><strong>Issue Identified:</strong> Failure on payment API response during checkout flow.</p><p><strong>Screenshot Attached Below:</strong></p><p><strong>Escalated To:</strong> Core backend infrastructure team for patch review.</p>'
-      },
-      {
-        id: 'tpl-3',
-        title: 'Weekly Ticket Recap',
-        content: '<p><strong>Weekly Progress:</strong> Milestone 1 completed; process documentation uploaded to Shelf.</p><p><strong>Pending Decisions:</strong> Go-live date sign-off pending leadership approval.</p>'
+function render() {
+  try {
+    let spent = 0, received = 0;
+    const catTotals = { 'Supermarket':0, 'Home':0, 'Patision House':0, 'Transportation':0, 'Entertainment':0, 'Savings':0, 'Others':0 };
+    
+    monthData.transactions.forEach(t => {
+      const amt = parseFloat(t.amount) || 0;
+      if (t.type === 'income') { received += amt; } 
+      else { 
+        spent += amt; 
+        if(catTotals[t.category] !== undefined) { catTotals[t.category] += amt; }
+        else { catTotals['Others'] += amt; }
       }
-    ];
-
-    // 2. INITIALIZATION
-    document.addEventListener('DOMContentLoaded', () => {
-      applyTheme(state.theme);
-      initQuill();
-      initSupabase();
-      bindEvents();
-      loadData();
     });
 
-    // 3. QUILL.JS INITIALIZATION WITH DIRECT PASTE SUPPORT
-    function initQuill() {
-      state.quill = new Quill('#quillEditor', {
-        theme: 'snow',
-        placeholder: 'Type your update notes here... Paste screenshots directly with Ctrl+V',
-        modules: {
-          toolbar: [
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-            ['link', 'image', 'clean']
-          ]
-        }
-      });
-    }
-
-    // 4. SUPABASE CLIENT INITIALIZATION (Graceful Offline Local Fallback)
-    function initSupabase() {
-      const url = localStorage.getItem('supabase_url');
-      const key = localStorage.getItem('supabase_key');
-      if (url && key && window.supabase) {
-        try {
-          state.supabaseClient = window.supabase.createClient(url, key);
-        } catch (e) {
-          console.error("Supabase init error:", e);
-        }
-      }
-    }
-
-    // 5. THEME MANAGER
-    const themes = ['obsidian', 'midnight', 'forest', 'clean-light'];
-    function applyTheme(themeName) {
-      document.documentElement.setAttribute('data-theme', themeName);
-      state.theme = themeName;
-      localStorage.setItem('jira_theme', themeName);
-    }
-
-    function cycleTheme() {
-      const nextIdx = (themes.indexOf(state.theme) + 1) % themes.length;
-      applyTheme(themes[nextIdx]);
-      showToast(`Switched theme to ${themes[nextIdx].replace('-', ' ')}`, 'success');
-    }
-
-    // 6. EVENT BINDINGS
-    function bindEvents() {
-      // Tab Navigation
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          state.currentTab = btn.getAttribute('data-tab');
-          renderTicketList();
-        });
-      });
-
-      // Search & Sort
-      document.getElementById('searchInput').addEventListener('input', renderTicketList);
-      document.getElementById('sortSelect').addEventListener('change', renderTicketList);
-
-      // Sidebar Toggle
-      document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
-        document.getElementById('sidebar').classList.toggle('collapsed');
-      });
-
-      // Header Buttons
-      document.getElementById('themeBtn').addEventListener('click', cycleTheme);
-      document.getElementById('templatesBtn').addEventListener('click', openTemplatesModal);
-      document.getElementById('settingsBtn').addEventListener('click', openSettingsModal);
-      document.getElementById('newTicketBtn').addEventListener('click', () => openTicketModal());
-      document.getElementById('editTicketBtn').addEventListener('click', () => {
-        const ticket = state.tickets.find(t => t.id === state.selectedTicketId);
-        if (ticket) openTicketModal(ticket);
-      });
-
-      // Modal Close Handlers
-      document.querySelectorAll('.closeModalBtn').forEach(btn => {
-        btn.addEventListener('click', closeAllModals);
-      });
-
-      // Modal Save Handlers
-      document.getElementById('saveTicketBtn').addEventListener('click', handleSaveTicket);
-      document.getElementById('saveSettingsBtn').addEventListener('click', handleSaveSettings);
-
-      // Detail Actions
-      document.getElementById('detailStatusSelect').addEventListener('change', handleStatusChange);
-      document.getElementById('postUpdateBtn').addEventListener('click', handlePostUpdate);
-      document.getElementById('summarizeAiBtn').addEventListener('click', handleGenerateAiSummary);
-    }
-
-    // 7. DATA LOADING & LOCAL STORAGE ENGINE
-    function loadData() {
-      const storedTickets = localStorage.getItem('jira_tickets');
-      const storedNotes = localStorage.getItem('jira_notes');
-
-      if (storedTickets) {
-        state.tickets = JSON.parse(storedTickets);
-      } else {
-        // Seed default ticket matching screenshot
-        state.tickets = [
-          {
-            id: 't-1',
-            jira_id: 'OPPR-9344',
-            title: 'Local acquiring in the Saudi Arabian market',
-            status: 'waiting_stakeholders',
-            priority: 'Medium',
-            alert_days: 3,
-            due_date: '2026-09-21T09:00',
-            jira_url: 'https://jira.company.com/browse/OPPR-9344',
-            shelf_url: 'https://confluence.company.com/pages/viewpage.action?pageId=102948',
-            created_at: new Date('2026-06-25T15:57:55').toISOString(),
-            last_updated: new Date('2026-09-10T10:00:00').toISOString(),
-            ai_summary: 'Setup for local acquiring in Saudi Arabia via PSP Checkout is complete, with the official go-live date now confirmed for September 21, 2026. All process documentation and announcement materials are finalized and scheduled for publication one day prior to launch.'
-          },
-          {
-            id: 't-2',
-            jira_id: 'OPPR-9934',
-            title: 'Hyperwallet Returned Transactions process update',
-            status: 'waiting_stakeholders',
-            priority: 'High',
-            alert_days: 2,
-            due_date: '',
-            jira_url: '',
-            shelf_url: '',
-            created_at: new Date('2026-09-01T10:00:00').toISOString(),
-            last_updated: new Date('2026-09-09T14:30:00').toISOString(),
-            ai_summary: null
-          },
-          {
-            id: 't-3',
-            jira_id: 'OPPR-7113',
-            title: 'Fare Increase Waiver',
-            status: 'waiting_stakeholders',
-            priority: 'Low',
-            alert_days: 5,
-            due_date: '',
-            jira_url: '',
-            shelf_url: '',
-            created_at: new Date('2026-08-15T09:00:00').toISOString(),
-            last_updated: new Date('2026-09-09T11:20:00').toISOString(),
-            ai_summary: null
-          }
-        ];
-        saveTicketsLocal();
-      }
-
-      if (storedNotes) {
-        state.notes = JSON.parse(storedNotes);
-      } else {
-        // Seed initial notes matching screenshot
-        state.notes = {
-          't-1': [
-            {
-              id: 'n-1',
-              timestamp: '6/25/2026, 3:57:55 PM',
-              html: '<p>"Local acquiring in Saudi market with PSP Checkout. Process is ready. Waiting for live date. Checked again for live date with Ismini, but there is no update yet."</p>'
-            },
-            {
-              id: 'n-2',
-              timestamp: '9/3/2026, 10:42:36 AM',
-              html: '<p>Some movements in the Slack channel about testing. No live date yet mentioned. Leaving Jira parked.</p>'
-            }
-          ]
-        };
-        saveNotesLocal();
-      }
-
-      updateTabCounts();
-      renderTicketList();
-
-      // Auto-select first ticket if available
-      const firstTabTicket = state.tickets.find(t => t.status === state.currentTab);
-      if (firstTabTicket) {
-        selectTicket(firstTabTicket.id);
-      }
-    }
-
-    function saveTicketsLocal() {
-      localStorage.setItem('jira_tickets', JSON.stringify(state.tickets));
-      updateTabCounts();
-    }
-
-    function saveNotesLocal() {
-      localStorage.setItem('jira_notes', JSON.stringify(state.notes));
-    }
-
-    // 8. TAB COUNTS & IN-APP ALERT CALCULATIONS
-    function updateTabCounts() {
-      const counts = {
-        waiting_stakeholders: 0,
-        waiting_internal: 0,
-        parked: 0,
-        finished: 0
-      };
-      state.tickets.forEach(t => {
-        if (counts[t.status] !== undefined) counts[t.status]++;
-      });
-      for (const [key, val] of Object.entries(counts)) {
-        const el = document.getElementById(`count-${key}`);
-        if (el) el.textContent = val;
-      }
-    }
-
-    // IN-APP VISUAL DEADLINE ENGINE: Replaces automated emails
-    function checkAlertStatus(ticket) {
-      const alerts = [];
-      const now = new Date();
-      const lastUpdate = new Date(ticket.last_updated || ticket.created_at);
-      const daysSinceUpdate = Math.floor((now - lastUpdate) / (1000 * 60 * 60 * 24));
-      const threshold = parseInt(ticket.alert_days || 3, 10);
-
-      // Inactivity Badge
-      if (daysSinceUpdate >= threshold && ticket.status !== 'finished') {
-        alerts.push({
-          type: 'inactive',
-          label: `⚠️ Inactive: ${daysSinceUpdate}d`,
-          detail: `Exceeds your ${threshold}-day update threshold`
-        });
-      }
-
-      // Due Date / 48-hour Deadline Badge
-      if (ticket.due_date && ticket.status !== 'finished') {
-        const due = new Date(ticket.due_date);
-        const hoursRemaining = (due - now) / (1000 * 60 * 60);
-
-        if (hoursRemaining < 0) {
-          alerts.push({
-            type: 'urgent',
-            label: `🚨 Overdue`,
-            detail: `Deadline passed on ${due.toLocaleDateString()}`
-          });
-        } else if (hoursRemaining <= 48) {
-          alerts.push({
-            type: 'urgent',
-            label: `⏰ Due <48h`,
-            detail: `${Math.round(hoursRemaining)} hours remaining`
-          });
-        }
-      }
-
-      return alerts;
-    }
-
-    // 9. RENDER TICKET LIST (LEFT SIDEBAR)
-    function renderTicketList() {
-      const container = document.getElementById('ticketListContainer');
-      container.innerHTML = '';
-
-      const query = document.getElementById('searchInput').value.toLowerCase().trim();
-      const sortBy = document.getElementById('sortSelect').value;
-
-      let filtered = state.tickets.filter(t => t.status === state.currentTab);
-
-      if (query) {
-        filtered = filtered.filter(t => 
-          (t.jira_id && t.jira_id.toLowerCase().includes(query)) ||
-          (t.title && t.title.toLowerCase().includes(query))
-        );
-      }
-
-      // Sorting Logic
-      filtered.sort((a, b) => {
-        if (sortBy === 'last_updated') return new Date(b.last_updated) - new Date(a.last_updated);
-        if (sortBy === 'jira_id') return a.jira_id.localeCompare(b.jira_id);
-        if (sortBy === 'priority') {
-          const weights = { Critical: 4, High: 3, Medium: 2, Low: 1 };
-          return (weights[b.priority] || 0) - (weights[a.priority] || 0);
-        }
-        if (sortBy === 'due_date') {
-          if (!a.due_date) return 1;
-          if (!b.due_date) return -1;
-          return new Date(a.due_date) - new Date(b.due_date);
-        }
-        return 0;
-      });
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:32px; font-size:13px; color:var(--text-dim);">No tickets in this tab.</div>`;
-        return;
-      }
-
-      filtered.forEach(ticket => {
-        const alerts = checkAlertStatus(ticket);
-        const card = document.createElement('div');
-        card.className = `ticket-card ${ticket.id === state.selectedTicketId ? 'selected' : ''}`;
-        card.onclick = () => selectTicket(ticket.id);
-
-        const updateDate = new Date(ticket.last_updated || ticket.created_at);
-        const dateStr = `${updateDate.getMonth() + 1}/${updateDate.getDate()}/${updateDate.getFullYear()}`;
-
-        // Status badge display string
-        let statusBadgeText = 'WAITING REPLY';
-        if (ticket.status === 'waiting_stakeholders') statusBadgeText = 'WAITING REPLY FROM S...';
-        else if (ticket.status === 'waiting_internal') statusBadgeText = 'WAITING INTERNAL';
-        else if (ticket.status === 'parked') statusBadgeText = 'PARKED';
-        else if (ticket.status === 'finished') statusBadgeText = 'FINISHED';
-
-        let alertBadgesHtml = '';
-        alerts.forEach(a => {
-          alertBadgesHtml += `<span class="badge ${a.type === 'urgent' ? 'badge-alert-urgent' : 'badge-alert-inactive'}" title="${a.detail}">${a.label}</span>`;
-        });
-
-        card.innerHTML = `
-          <div class="card-meta-top">
-            <span class="card-key">${DOMPurify.sanitize(ticket.jira_id)}</span>
-            <span class="card-date">LAST UPDATE: ${dateStr}</span>
-          </div>
-          <div class="card-title">${DOMPurify.sanitize(ticket.title)}</div>
-          <div class="card-badges">
-            <span class="badge badge-status">${statusBadgeText}</span>
-            <span class="badge badge-prio-${ticket.priority.toLowerCase()}">${ticket.priority}</span>
-            ${alertBadgesHtml}
-          </div>
-        `;
-
-        container.appendChild(card);
-      });
-    }
-
-    // 10. SELECT & RENDER TICKET DETAIL (RIGHT PANEL)
-    function selectTicket(ticketId) {
-      state.selectedTicketId = ticketId;
-      const ticket = state.tickets.find(t => t.id === ticketId);
-      
-      const emptyState = document.getElementById('emptyState');
-      const activeContent = document.getElementById('activeTicketContent');
-
-      if (!ticket) {
-        emptyState.style.display = 'flex';
-        activeContent.style.display = 'none';
-        return;
-      }
-
-      emptyState.style.display = 'none';
-      activeContent.style.display = 'flex';
-
-      // Re-render sidebar to highlight selected card
-      renderTicketList();
-
-      // Badges & In-App Alert Badges
-      const badgesContainer = document.getElementById('detailBadges');
-      badgesContainer.innerHTML = `
-        <span class="badge badge-prio-${ticket.priority.toLowerCase()}">${ticket.priority} Prio</span>
-      `;
-      const alerts = checkAlertStatus(ticket);
-      alerts.forEach(a => {
-        badgesContainer.innerHTML += `
-          <span class="badge ${a.type === 'urgent' ? 'badge-alert-urgent' : 'badge-alert-inactive'}" title="${a.detail}">
-            ${a.label} — ${a.detail}
-          </span>
-        `;
-      });
-
-      // Keys & Titles
-      document.getElementById('detailKey').textContent = ticket.jira_id;
-      document.getElementById('detailTitle').textContent = ticket.title;
-      document.getElementById('detailStatusSelect').value = ticket.status;
-
-      // Jira external link
-      const extLink = document.getElementById('detailExternalJiraLink');
-      if (ticket.jira_url) {
-        extLink.href = ticket.jira_url;
-        extLink.style.display = 'inline-block';
-      } else {
-        extLink.style.display = 'none';
-      }
-
-      // Shelf / Spec Reference Link
-      const linksRow = document.getElementById('detailLinksRow');
-      linksRow.innerHTML = '';
-      if (ticket.shelf_url) {
-        linksRow.innerHTML += `
-          <a href="${DOMPurify.sanitize(ticket.shelf_url)}" target="_blank" class="detail-link-item">
-            <i class="fa-solid fa-book-bookmark"></i> Confluence / Shelf Documentation
-          </a>
-        `;
-      }
-
-      // AI Summary Card
-      const aiCard = document.getElementById('aiSummaryCard');
-      if (ticket.ai_summary) {
-        aiCard.style.display = 'flex';
-        document.getElementById('aiSummaryText').textContent = ticket.ai_summary;
-        document.getElementById('aiSummaryTime').textContent = ticket.ai_summary_date || 'Saved';
-      } else {
-        aiCard.style.display = 'none';
-      }
-
-      // Render Notes List
-      renderNotesHistory(ticket.id);
-    }
-
-    function renderNotesHistory(ticketId) {
-      const container = document.getElementById('noteHistoryContainer');
-      container.innerHTML = '';
-      const notes = state.notes[ticketId] || [];
-
-      if (notes.length === 0) {
-        container.innerHTML = `<div style="color:var(--text-dim); font-size:13px; font-style:italic;">No logged updates yet for this ticket. Add a comment below.</div>`;
-        return;
-      }
-
-      notes.forEach((note, index) => {
-        const card = document.createElement('div');
-        card.className = 'note-card';
-        // DOMPurify strips dangerous scripts and payloads
-        const cleanHtml = DOMPurify.sanitize(note.html);
-
-        card.innerHTML = `
-          <div class="note-meta">
-            <span>${note.timestamp}</span>
-            <button class="btn-icon" onclick="deleteNote('${ticketId}', ${index})" title="Delete Note">
-              <i class="fa-solid fa-trash-can" style="font-size:12px;"></i>
-            </button>
-          </div>
-          <div class="note-body">${cleanHtml}</div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    // 11. AUTOMATIC TAB ROUTING VIA STATUS CHANGE
-    function handleStatusChange(e) {
-      const newStatus = e.target.value;
-      const ticket = state.tickets.find(t => t.id === state.selectedTicketId);
-      if (!ticket) return;
-
-      ticket.status = newStatus;
-      ticket.last_updated = new Date().toISOString();
-      saveTicketsLocal();
-
-      // Automatically switch to the destination tab for immediate visual clarity
-      state.currentTab = newStatus;
-      document.querySelectorAll('.tab-btn').forEach(b => {
-        b.classList.toggle('active', b.getAttribute('data-tab') === newStatus);
-      });
-
-      renderTicketList();
-      selectTicket(ticket.id);
-      showToast(`Moved to ${newStatus.replace('_', ' ')} tab`, 'success');
-    }
-
-    // 12. POST UPDATE (QUILL NOTES)
-    function handlePostUpdate() {
-      const ticket = state.tickets.find(t => t.id === state.selectedTicketId);
-      if (!ticket) return;
-
-      const htmlContent = state.quill.root.innerHTML.trim();
-      if (htmlContent === '<p><br></p>' || !htmlContent) {
-        showToast('Cannot post empty note', 'warning');
-        return;
-      }
-
-      const now = new Date();
-      const timestampStr = now.toLocaleString();
-
-      if (!state.notes[ticket.id]) {
-        state.notes[ticket.id] = [];
-      }
-
-      state.notes[ticket.id].push({
-        id: 'n-' + Date.now(),
-        timestamp: timestampStr,
-        html: htmlContent
-      });
-
-      ticket.last_updated = now.toISOString();
-      saveNotesLocal();
-      saveTicketsLocal();
-
-      state.quill.setContents([]);
-      renderNotesHistory(ticket.id);
-      renderTicketList();
-      showToast('Update posted successfully', 'success');
-    }
-
-    window.deleteNote = function(ticketId, index) {
-      if (!confirm('Are you sure you want to delete this update?')) return;
-      if (state.notes[ticketId]) {
-        state.notes[ticketId].splice(index, 1);
-        saveNotesLocal();
-        renderNotesHistory(ticketId);
-        showToast('Note deleted', 'success');
-      }
-    };
-
-    // 13. 1-CLICK AI NOTE SUMMARIZER (GEMINI 3.6 FLASH)
-    async function handleGenerateAiSummary() {
-      const ticket = state.tickets.find(t => t.id === state.selectedTicketId);
-      if (!ticket) return;
-
-      const notes = state.notes[ticket.id] || [];
-      if (notes.length === 0) {
-        showToast('No logged notes available to summarize.', 'warning');
-        return;
-      }
-
-      const apiKey = state.geminiApiKey || localStorage.getItem('gemini_api_key');
-      if (!apiKey) {
-        showToast('Please set your Gemini API key in Settings first.', 'warning');
-        openSettingsModal();
-        return;
-      }
-
-      // Compile plain text from past notes
-      const notesHistory = notes.map((n, i) => `[Entry ${i+1} at ${n.timestamp}]:\n${stripHtml(n.html)}`).join('\n\n');
-      const prompt = `You are a concise executive technical assistant. Summarize the following past written notes for ticket ${ticket.jira_id} (${ticket.title}). In 2-3 sentences, summarize what the issue was and what work/progress has been done. Be clear, professional, and direct:\n\n${notesHistory}`;
-
-      const btn = document.getElementById('summarizeAiBtn');
-      btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Summarizing...`;
-
-      try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-          })
-        });
-
-        const data = await response.json();
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
-          const summary = data.candidates[0].content.parts[0].text.trim();
-          ticket.ai_summary = summary;
-          ticket.ai_summary_date = new Date().toLocaleTimeString();
-          saveTicketsLocal();
-
-          document.getElementById('aiSummaryCard').style.display = 'flex';
-          document.getElementById('aiSummaryText').textContent = summary;
-          document.getElementById('aiSummaryTime').textContent = ticket.ai_summary_date;
-          showToast('AI Summary updated!', 'success');
-        } else {
-          throw new Error('No summary returned');
-        }
-      } catch (err) {
-        console.error(err);
-        showToast('AI Summarization failed. Check API key.', 'error');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Summarize (AI)`;
-      }
-    }
-
-    function stripHtml(html) {
-      const tmp = document.createElement('DIV');
-      tmp.innerHTML = html;
-      return tmp.textContent || tmp.innerText || '';
-    }
-
-    // 14. MODAL MANAGEMENT (New/Edit Ticket, Templates, Settings)
-    function openTicketModal(existingTicket = null) {
-      const modal = document.getElementById('ticketModal');
-      const titleEl = document.getElementById('ticketModalTitle');
-
-      if (existingTicket) {
-        titleEl.textContent = 'Edit Jira Ticket';
-        document.getElementById('modalTicketId').value = existingTicket.id;
-        document.getElementById('modalJiraKey').value = existingTicket.jira_id;
-        document.getElementById('modalSummary').value = existingTicket.title;
-        document.getElementById('modalStatus').value = existingTicket.status;
-        document.getElementById('modalPriority').value = existingTicket.priority;
-        document.getElementById('modalAlertDays').value = existingTicket.alert_days || 3;
-        document.getElementById('modalDueDate').value = existingTicket.due_date || '';
-        document.getElementById('modalJiraUrl').value = existingTicket.jira_url || '';
-        document.getElementById('modalShelfUrl').value = existingTicket.shelf_url || '';
-      } else {
-        titleEl.textContent = 'Create New Jira Ticket';
-        document.getElementById('modalTicketId').value = '';
-        document.getElementById('modalJiraKey').value = '';
-        document.getElementById('modalSummary').value = '';
-        document.getElementById('modalStatus').value = state.currentTab;
-        document.getElementById('modalPriority').value = 'Medium';
-        document.getElementById('modalAlertDays').value = '3';
-        document.getElementById('modalDueDate').value = '';
-        document.getElementById('modalJiraUrl').value = '';
-        document.getElementById('modalShelfUrl').value = '';
-      }
-
-      modal.classList.add('active');
-    }
-
-    function handleSaveTicket() {
-      const id = document.getElementById('modalTicketId').value;
-      const key = document.getElementById('modalJiraKey').value.trim().toUpperCase();
-      const title = document.getElementById('modalSummary').value.trim();
-      const status = document.getElementById('modalStatus').value;
-      const priority = document.getElementById('modalPriority').value;
-      const alert_days = parseInt(document.getElementById('modalAlertDays').value, 10);
-      const due_date = document.getElementById('modalDueDate').value;
-      const jira_url = document.getElementById('modalJiraUrl').value.trim();
-      const shelf_url = document.getElementById('modalShelfUrl').value.trim();
-
-      if (!key || !title) {
-        showToast('Jira Key and Summary are required.', 'warning');
-        return;
-      }
-
-      const now = new Date().toISOString();
-
-      if (id) {
-        // Edit existing
-        const ticket = state.tickets.find(t => t.id === id);
-        if (ticket) {
-          ticket.jira_id = key;
-          ticket.title = title;
-          ticket.status = status;
-          ticket.priority = priority;
-          ticket.alert_days = alert_days;
-          ticket.due_date = due_date;
-          ticket.jira_url = jira_url;
-          ticket.shelf_url = shelf_url;
-          ticket.last_updated = now;
-        }
-        showToast('Ticket updated successfully', 'success');
-      } else {
-        // New ticket
-        const newTicket = {
-          id: 't-' + Date.now(),
-          jira_id: key,
-          title: title,
-          status: status,
-          priority: priority,
-          alert_days: alert_days,
-          due_date: due_date,
-          jira_url: jira_url,
-          shelf_url: shelf_url,
-          created_at: now,
-          last_updated: now,
-          ai_summary: null
-        };
-        state.tickets.unshift(newTicket);
-        state.selectedTicketId = newTicket.id;
-        showToast('Ticket created successfully', 'success');
-      }
-
-      saveTicketsLocal();
-      closeAllModals();
-      renderTicketList();
-      selectTicket(id || state.selectedTicketId);
-    }
-
-    // Templates Modal
-    function openTemplatesModal() {
-      const container = document.getElementById('templatesList');
-      container.innerHTML = '';
-
-      defaultTemplates.forEach(tpl => {
-        const card = document.createElement('div');
-        card.className = 'template-card';
-        card.innerHTML = `
-          <div class="template-card-header">
-            <span>${tpl.title}</span>
-            <div class="template-card-actions">
-              <button class="btn-header" onclick="insertTemplate('${tpl.id}')" title="Insert into active note">
-                <i class="fa-solid fa-arrow-down-to-bracket"></i> Insert
-              </button>
-              <button class="btn-icon" onclick="copyTemplate('${tpl.id}')" title="Copy to clipboard">
-                <i class="fa-solid fa-copy"></i>
-              </button>
+    const totalIncome = parseFloat(monthData.salary) + received;
+    const totalLeft = totalIncome - spent;
+
+    document.getElementById('salary-display').textContent = monthData.salary || '0';
+    document.getElementById('stat-spent').textContent = fmt(spent);
+    document.getElementById('stat-received').textContent = fmt(totalIncome);
+    
+    const leftEl = document.getElementById('stat-left');
+    leftEl.textContent = fmt(totalLeft);
+    leftEl.className = 'stat-value ' + (totalLeft >= 0 ? 'positive' : 'negative');
+
+    const catPanel = document.getElementById('cat-breakdown-panel');
+    const activeSpentCats = Object.entries(catTotals).filter(([_, val]) => val > 0).sort((a,b) => b[1] - a[1]);
+    
+    if(activeSpentCats.length === 0) {
+      catPanel.innerHTML = '<div style="text-align:center; padding:1rem; color:var(--text3); font-size:13px;">No expenses tracked this month.</div>';
+    } else {
+      catPanel.innerHTML = activeSpentCats.map(([c, val]) => {
+        const isSelected = activeCategoryFilter === c;
+        return `
+          <div class="cat-row ${isSelected ? 'filtered-active' : ''}" onclick="toggleCategoryFilter('${c}')">
+            <div class="cat-row-label">${CAT_ICONS[c]} ${c}</div>
+            <div class="cat-row-amount">
+              ${fmt(val)} EUR
+              <span style="font-size:10px; opacity:0.4;">${isSelected ? '▼' : '▶'}</span>
             </div>
           </div>
-          <div style="font-size:12px; color:var(--text-muted); background:var(--bg-main); padding:10px; border-radius:6px;">
-            ${tpl.content}
-          </div>
         `;
-        container.appendChild(card);
-      });
-
-      document.getElementById('templatesModal').classList.add('active');
+      }).join('');
     }
 
-    window.insertTemplate = function(tplId) {
-      const tpl = defaultTemplates.find(t => t.id === tplId);
-      if (!tpl || !state.quill) return;
-      state.quill.clipboard.dangerouslyPasteHTML(state.quill.getLength(), tpl.content);
-      closeAllModals();
-      showToast('Template inserted into note editor', 'success');
-    };
-
-    window.copyTemplate = function(tplId) {
-      const tpl = defaultTemplates.find(t => t.id === tplId);
-      if (!tpl) return;
-      navigator.clipboard.writeText(stripHtml(tpl.content)).then(() => {
-        showToast('Copied to clipboard', 'success');
-      });
-    };
-
-    // Settings Modal
-    function openSettingsModal() {
-      document.getElementById('cfgSupabaseUrl').value = localStorage.getItem('supabase_url') || '';
-      document.getElementById('cfgSupabaseKey').value = localStorage.getItem('supabase_key') || '';
-      document.getElementById('cfgGeminiKey').value = localStorage.getItem('gemini_api_key') || '';
-      document.getElementById('settingsModal').classList.add('active');
+    const titleArea = document.getElementById('ledger-title-area');
+    if (activeCategoryFilter) {
+      titleArea.innerHTML = `
+        <span style="display:flex; align-items:center; gap:8px;">
+          Filtered: 
+          <span class="filter-pill">
+            ${CAT_ICONS[activeCategoryFilter]} ${activeCategoryFilter}
+            <button class="filter-clear-btn" onclick="clearCategoryFilter()">✕</button>
+          </span>
+        </span>`;
+    } else {
+      titleArea.textContent = "Transactions Ledger";
     }
 
-    function handleSaveSettings() {
-      const supaUrl = document.getElementById('cfgSupabaseUrl').value.trim();
-      const supaKey = document.getElementById('cfgSupabaseKey').value.trim();
-      const geminiKey = document.getElementById('cfgGeminiKey').value.trim();
+    const displayedTransactions = monthData.transactions.filter(t => {
+      if (!activeCategoryFilter) return true;
+      return t.category === activeCategoryFilter;
+    });
 
-      if (supaUrl) localStorage.setItem('supabase_url', supaUrl);
-      else localStorage.removeItem('supabase_url');
-
-      if (supaKey) localStorage.setItem('supabase_key', supaKey);
-      else localStorage.removeItem('supabase_key');
-
-      if (geminiKey) {
-        localStorage.setItem('gemini_api_key', geminiKey);
-        state.geminiApiKey = geminiKey;
-      } else {
-        localStorage.removeItem('gemini_api_key');
-        state.geminiApiKey = '';
-      }
-
-      initSupabase();
-      closeAllModals();
-      showToast('Workspace settings saved!', 'success');
+    const listEl = document.getElementById('ledger-entries-list');
+    if (displayedTransactions.length === 0) {
+      listEl.innerHTML = '<div class="loading" style="color:var(--text3)">No tracking logs match your criteria.</div>';
+      return;
     }
+    
+    listEl.innerHTML = displayedTransactions.map(t => {
+      const isInc = t.type === 'income';
+      const cssTheme = CAT_COLORS[isInc ? 'Received' : t.category] || 'cat-others';
+      const icon = isInc ? CAT_ICONS['Received'] : (CAT_ICONS[t.category] || '📦');
+      return `
+        <div class="tx-item">
+          <div class="tx-icon ${cssTheme}">${icon}</div>
+          <div class="tx-info">
+            <div class="tx-desc">${escHtml(t.description || t.category)}</div>
+            <div class="tx-cat">${t.category} · ${new Date(t.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-amount ${isInc ? 'in' : 'out'}">${isInc ? '+' : '-'}${fmt(t.amount)}</div>
+            <button class="tx-delete-btn" onclick="deleteTransaction(event, '${t.id}')">✕</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch(err) { console.error(err); }
+}
 
-    function closeAllModals() {
-      document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+function toggleSalaryEdit() {
+  const display = document.getElementById('salary-display');
+  const input = document.getElementById('salary-input');
+  if (input.style.display === 'none') {
+    display.style.display = 'none'; input.style.display = 'inline-block';
+    input.value = monthData.salary; input.focus();
+  } else { saveSalary(); }
+}
+
+async function saveSalary() {
+  const val = parseFloat(document.getElementById('salary-input').value) || 0;
+  
+  const display = document.getElementById('salary-display');
+  const input = document.getElementById('salary-input');
+  display.textContent = val;
+  display.style.display = 'inline-block';
+  input.style.display = 'none';
+
+  const { error } = await sb.from('monthly_salary').upsert({month_key: currentMonthKey, salary: val}, {onConflict:'month_key'});
+  if (error) {
+    alert(`Salary Sync Blocked!\nCode: ${error.code}\nMessage: ${error.message}`);
+  }
+  await loadMonth();
+}
+
+function setType(type) {
+  currentType = type;
+  document.getElementById('type-expense').classList.toggle('active', type === 'expense');
+  document.getElementById('type-income').classList.toggle('active', type === 'income');
+  document.getElementById('cat-wrapper').style.display = type === 'income' ? 'none' : 'block';
+  document.getElementById('amount-label').textContent = type === 'income' ? 'Amount Received (€)' : 'Amount (€)';
+}
+
+function openAddModal() {
+  document.getElementById('field-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('field-desc').value = '';
+  document.getElementById('field-amount').value = '';
+  document.getElementById('field-category').value = 'Supermarket';
+  setType('expense');
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+async function saveTransaction() {
+  const date = document.getElementById('field-date').value;
+  const category = currentType === 'income' ? 'Received' : document.getElementById('field-category').value;
+  const description = document.getElementById('field-desc').value.trim();
+  const amount = parseFloat(document.getElementById('field-amount').value) || 0;
+  if (!date || amount <= 0) return;
+  
+  const payload = { month_key: currentMonthKey, type: currentType, category, description, amount, date };
+  closeModal();
+  
+  const { error } = await sb.from('transactions').insert([payload]);
+  if (error) {
+    alert(`Transaction Write Blocked!\nCode: ${error.code}\nMessage: ${error.message}`);
+  }
+  await loadMonth();
+}
+
+async function deleteTransaction(event, id) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
+  if (!confirm("Permanently delete this row?")) return;
+  
+  const { error } = await sb.from('transactions').delete().match({ id: id });
+  if (error) {
+    alert(`Deletion Request Rejected!\nCode: ${error.code}\nMessage: ${error.message}`);
+  }
+  await loadMonth();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Main Database Credentials (qpkwtinwqtetebhqdwji)
+  const url = "https://qpkwtinwqtetebhqdwji.supabase.co";
+  const key = "sb_publishable_5GwvJ-Ks1enlu-QEc86_6g_8MVrPRa3";
+  try { 
+    if (window.supabase) {
+      sb = window.supabase.createClient(url, key); 
+      initApp(); 
+    } else {
+      document.getElementById('ledger-entries-list').innerHTML = '<div class="loading" style="color:var(--accent2)">Supabase Library failed to load from CDN.</div>';
     }
-
-    // 15. TOAST NOTIFICATIONS
-    function showToast(message, type = 'info') {
-      const container = document.getElementById('toastContainer');
-      const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
-      
-      let icon = 'circle-info';
-      if (type === 'success') icon = 'circle-check';
-      if (type === 'warning') icon = 'triangle-exclamation';
-      if (type === 'error') icon = 'circle-exclamation';
-
-      toast.innerHTML = `<i class="fa-solid fa-${icon}"></i> <span>${message}</span>`;
-      container.appendChild(toast);
-
-      setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(10px)';
-        toast.style.transition = 'all 0.25s ease';
-        setTimeout(() => toast.remove(), 250);
-      }, 3200);
-    }
-  </script>
+  } catch(e) {
+    document.getElementById('ledger-entries-list').innerHTML = `<div class="loading" style="color:var(--accent2)">Init Error: ${e.message || e}</div>`;
+  }
+});
+</script>
 </body>
 </html>
-```eof
-
-### Summary of Changes:
-- **Zero EmailJS Footprint:** Completely removed the EmailJS script tags, library initialization, public API key constants, and background mail dispatchers.
-- **In-App Visual Deadline Engine:** Added real-time calculation of inactivity thresholds (e.g. `⚠️ Inactive: 5d`) and 48-hour deadlines (`⏰ Due <48h`, `🚨 Overdue`) that display animated badges directly on the ticket cards and header.
-- **100% Policy Compliant:** Operates without making any outbound email network requests, keeping your workflow compliant with internal IT and data exfiltration rules.
-- **Full Feature Retention:** Preserved the dark-mode Obsidian UI, automatic tab routing on status dropdown change, Quill.js rich text editor with `Ctrl+V` screenshot pasting, DOMPurify sanitization, and the Gemini 1-Click AI Summarizer.Ditching EmailJS for your own backend setup gives you complete control over your mail logic without third-party rate limits.
-
-Here is a full, working setup using a **Node.js + Express backend** with **Nodemailer**, paired with a standard **HTML/JavaScript frontend**.
-
----
-
-**1. Backend Code (`server.js`)**
-
-Run `npm init -y` and `npm install express nodemailer cors dotenv` in your server folder.
-
-```javascript
-require('dotenv').config();
-const express = require('express');
-const nodemailer = require('nodemailer');
-const cors = require('cors');
-
-const app = express();
-app.use(express.json());
-app.use(cors());
-
-// Configure SMTP transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail', // Replace with your provider or custom SMTP settings
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS // Use an App Password, not your personal password
-  }
-});
-
-app.post('/api/send-email', async (req, res) => {
-  const { name, email, message } = req.body;
-
-  if (!name || !email || !message) {
-    return res.status(400).json({ success: false, error: 'All fields are required.' });
-  }
-
-  try {
-    await transporter.sendMail({
-      from: `"${name}" <${process.env.EMAIL_USER}>`,
-      replyTo: email,
-      to: process.env.EMAIL_USER,
-      subject: `New Contact Form Message from ${name}`,
-      html: `
-        <h3>New Contact Form Submission</h3>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message}</p>
-      `
-    });
-
-    res.status(200).json({ success: true, message: 'Email sent successfully!' });
-  } catch (error) {
-    console.error('Email Error:', error);
-    res.status(500).json({ success: false, error: 'Failed to send email.' });
-  }
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
